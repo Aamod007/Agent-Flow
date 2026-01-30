@@ -1,0 +1,22 @@
+{
+    "name": "agentflow",
+    "version": "1.0.0",
+    "description": "AI Workflow Automation Platform",
+    "private": true,
+    "scripts": {
+        "dev": "concurrently -n \"workflow,execution,gateway,frontend\" -c \"blue,green,yellow,magenta\" \"npm run dev:workflow\" \"npm run dev:execution\" \"npm run dev:gateway\" \"npm run dev:frontend\"",
+        "dev:backend": "concurrently -n \"workflow,execution,gateway\" -c \"blue,green,yellow\" \"npm run dev:workflow\" \"npm run dev:execution\" \"npm run dev:gateway\"",
+        "dev:workflow": "cd backend/workflow && npm run dev",
+        "dev:execution": "cd backend/execution && npm run dev",
+        "dev:gateway": "cd backend/gateway && npm run dev",
+        "dev:frontend": "cd frontend && npm run dev",
+        "install:all": "npm install && cd backend/workflow && npm install && cd ../execution && npm install && cd ../gateway && npm install && cd ../../frontend && npm install",
+        "build": "cd frontend && npm run build",
+        "db:migrate": "cd backend/workflow && npx prisma migrate deploy",
+        "db:generate": "cd backend/workflow && npx prisma generate",
+        "db:push": "cd backend/workflow && npx prisma db push"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}

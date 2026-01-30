@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  company   String?
+  role      String?
+  avatar    String?
+  workflows Workflow[]
+  apiKeys   ApiKey[]
+  settings  UserSettings?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String   // e.g., "Gemini API", "OpenAI API"
+  provider  String   // gemini, openai, groq, ollama
+  key       String   // Encrypted API key
+  status    String   @default("active") // active, inactive
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserSettings {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme               String   @default("dark") // dark, light, system
+  accentColor         String   @default("indigo")
+  emailNotifications  Boolean  @default(true)
+  browserNotifications Boolean @default(true)
+  workflowComplete    Boolean  @default(true)
+  workflowFailed      Boolean  @default(true)
+  weeklyReport        Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Workflow {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  definition      String   @default("{}") // JSON string of React Flow nodes/edges
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+  status          String   @default("draft") // draft, active, paused, archived
+  
+  // Error handling
+  errorWorkflowId String?  // Workflow to run on failure
+  
+  // Metadata
+  currentVersion  Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  executions      Execution[]
+  webhooks        Webhook[]
+  schedules       Schedule[]
+  versions        WorkflowVersion[]
+  permissions     WorkflowPermission[]
+}
+
+model Execution {
+  id         String   @id @default(uuid())
+  workflowId String
+  workflow   Workflow @relation(fields: [workflowId], references: [id])
+  status     String   @default("pending") // pending, running, completed, failed
+  logs       String?  // JSON logs
+  result     String?
+  startedAt  DateTime @default(now())
+  endedAt    DateTime?
+  triggeredBy String? // manual, webhook, schedule
+  triggerData String? // JSON data from trigger
+}
+
+// ==========================================
+// TRIGGERS & SCHEDULING
+// ==========================================
+
+model Webhook {
+  id          String   @id @default(uuid())
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  path        String   @unique  // Unique webhook path e.g., "abc123"
+  method      String   @default("POST") // GET, POST, PUT, DELETE
+  secret      String?  // Optional webhook secret for validation
+  isActive    Boolean  @default(true)
+  lastCalledAt DateTime?
+  callCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([workflowId])
+  @@index([path])
+}
+
+model Schedule {
+  id          String   @id @default(uuid())
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  cronExpr    String   // Cron expression e.g., "0 9 * * *"
+  timezone    String   @default("UTC")
+  isActive    Boolean  @default(true)
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+  runCount    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([workflowId])
+  @@index([isActive])
+}
+
+// ==========================================
+// VERSION HISTORY
+// ==========================================
+
+model WorkflowVersion {
+  id          String   @id @default(uuid())
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  version     Int      // Auto-incrementing version number
+  name        String?  // Optional version name
+  definition  String   // Snapshot of workflow definition
+  createdBy   String?  // User who created this version
+  createdAt   DateTime @default(now())
+
+  @@unique([workflowId, version])
+  @@index([workflowId])
+}
+
+// ==========================================
+// TEAMS & PERMISSIONS
+// ==========================================
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  members     TeamMember[]
+  workflows   WorkflowPermission[]
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  role      String   @default("member") // owner, admin, member, viewer
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+model WorkflowPermission {
+  id          String   @id @default(uuid())
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  teamId      String?
+  team        Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId      String?  // For direct user sharing
+  permission  String   @default("view") // view, edit, execute, admin
+  createdAt   DateTime @default(now())
+
+  @@index([workflowId])
+  @@index([teamId])
+  @@index([userId])
+}
