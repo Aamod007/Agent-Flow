@@ -18,8 +18,6 @@ import {
     History,
     Terminal,
     Zap,
-    Maximize2,
-    Minimize2,
     Copy,
     Check,
     Timer,
@@ -65,7 +63,6 @@ export default function ExecutionMonitor({
     const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
     const [executionHistory, setExecutionHistory] = useState<ExecutionHistory[]>([]);
     const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
-    const [isExpanded, setIsExpanded] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const logsEndRef = useRef<HTMLDivElement>(null);
 
@@ -245,138 +242,129 @@ export default function ExecutionMonitor({
     const StatusIcon = statusConfig?.icon || Clock;
 
     return (
-        <div className={cn(
-            "fixed bottom-4 right-4 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col z-50 transition-all duration-300",
-            isExpanded 
-                ? "w-[600px] max-h-[700px]" 
-                : "w-[440px] max-h-[520px]"
-        )}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 rounded-t-2xl">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20">
-                        <Terminal className="w-5 h-5 text-purple-400" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
+            <div 
+                className="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl flex flex-col"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20">
+                            <Terminal className="w-5 h-5 text-purple-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-semibold text-zinc-100">Execution Monitor</h2>
+                            <p className="text-xs text-zinc-500">
+                                {isPolling ? (
+                                    <span className="flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                                        <span className="text-purple-400 font-medium">Live monitoring</span>
+                                    </span>
+                                ) : 'View execution logs and results'}
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <span className="text-sm font-semibold text-zinc-100">
-                            Execution Monitor
-                        </span>
-                        {isPolling && (
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                                <span className="text-[10px] text-purple-400 font-medium uppercase tracking-wider">Live</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                <div className="flex items-center gap-1">
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="p-1.5 rounded-lg hover:bg-zinc-800/50 text-zinc-500 hover:text-zinc-200 transition-colors"
-                    >
-                        {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                    </button>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg hover:bg-zinc-800/50 text-zinc-500 hover:text-zinc-200 transition-colors"
+                        className="p-2 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
                     >
                         <X className="w-4 h-4" />
                     </button>
                 </div>
-            </div>
 
-            {/* Status Bar */}
-            {execution && statusConfig && (
-                <div className={cn("px-4 py-3 border-b border-zinc-800/60", statusConfig.bg)}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <StatusIcon className={cn("w-5 h-5", statusConfig.color, statusConfig.animate && "animate-pulse")} />
-                            <div>
-                                <span className={cn(
-                                    'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border',
-                                    statusConfig.bg, statusConfig.color, statusConfig.border
-                                )}>
-                                    {statusConfig.label}
-                                </span>
+                {/* Status Bar */}
+                {execution && statusConfig && (
+                    <div className={cn("px-4 py-3 border-b border-zinc-800", statusConfig.bg)}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <StatusIcon className={cn("w-5 h-5", statusConfig.color, statusConfig.animate && "animate-pulse")} />
+                                <div>
+                                    <span className={cn(
+                                        'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border',
+                                        statusConfig.bg, statusConfig.color, statusConfig.border
+                                    )}>
+                                        {statusConfig.label}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-zinc-500">
-                            <div className="flex items-center gap-1.5">
-                                <Timer className="w-3.5 h-3.5" />
-                                <span className="text-zinc-300">{formatDuration(execution.startedAt, execution.endedAt)}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5" />
-                                <span className="text-zinc-300">{formatTime(execution.startedAt)}</span>
+                            <div className="flex items-center gap-4 text-xs text-zinc-500">
+                                <div className="flex items-center gap-1.5">
+                                    <Timer className="w-3.5 h-3.5" />
+                                    <span className="text-zinc-300">{formatDuration(execution.startedAt, execution.endedAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    <span className="text-zinc-300">{formatTime(execution.startedAt)}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Tab Buttons */}
-            <div className="flex border-b border-zinc-800/60 bg-zinc-900/30">
-                {[
-                    { id: 'logs', label: 'Logs', icon: Terminal, count: logs.length, color: 'indigo' },
-                    { id: 'results', label: 'Output', icon: Sparkles, count: results.length, color: 'emerald' },
-                    { id: 'history', label: 'History', icon: History, count: executionHistory.length, color: 'amber' },
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                        className={cn(
-                            'flex-1 px-4 py-2.5 text-xs font-medium transition-all flex items-center justify-center gap-2 border-b-2',
-                            activeTab === tab.id
-                                ? 'border-current bg-white/5'
-                                : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30'
-                        )}
-                        style={activeTab === tab.id ? {
-                            color: tab.color === 'indigo' ? 'rgb(129, 140, 248)' : 
-                                   tab.color === 'emerald' ? 'rgb(52, 211, 153)' : 'rgb(251, 191, 36)',
-                        } : {}}
-                    >
-                        <tab.icon className="w-3.5 h-3.5" />
-                        {tab.label}
-                        <span className={cn(
-                            "px-1.5 py-0.5 rounded-full text-[10px] font-bold min-w-[20px]",
-                            activeTab === tab.id 
-                                ? "bg-current/20" 
-                                : "bg-zinc-800 text-zinc-500"
-                        )}>
-                            {tab.count}
-                        </span>
-                    </button>
-                ))}
-            </div>
-
-            {/* Content Section */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-zinc-900/30">
-                {!executionId && activeTab !== 'history' ? (
-                    /* No Execution State */
-                    <div className="flex flex-col items-center justify-center h-full py-8">
-                        <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 mb-5">
-                            <Zap className="w-10 h-10 text-emerald-400" />
-                        </div>
-                        <h3 className="text-base font-semibold text-zinc-100 mb-1">Ready to Execute</h3>
-                        <p className="text-sm text-zinc-500 text-center mb-5 max-w-[250px]">
-                            Run your workflow to see live execution logs and results
-                        </p>
-                        <Button
-                            onClick={onExecute}
-                            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-500/20"
+                {/* Tab Buttons */}
+                <div className="flex border-b border-zinc-800 bg-zinc-900/30">
+                    {[
+                        { id: 'logs', label: 'Logs', icon: Terminal, count: logs.length, color: 'indigo' },
+                        { id: 'results', label: 'Output', icon: Sparkles, count: results.length, color: 'emerald' },
+                        { id: 'history', label: 'History', icon: History, count: executionHistory.length, color: 'amber' },
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                            className={cn(
+                                'flex-1 px-4 py-2.5 text-xs font-medium transition-all flex items-center justify-center gap-2 border-b-2',
+                                activeTab === tab.id
+                                    ? 'border-current bg-white/5'
+                                    : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30'
+                            )}
+                            style={activeTab === tab.id ? {
+                                color: tab.color === 'indigo' ? 'rgb(129, 140, 248)' : 
+                                       tab.color === 'emerald' ? 'rgb(52, 211, 153)' : 'rgb(251, 191, 36)',
+                            } : {}}
                         >
-                            <Play className="w-4 h-4 mr-2" />
-                            Execute Workflow
-                        </Button>
-                    </div>
-                ) : activeTab === 'history' ? (
-                    /* History Tab */
-                    executionHistory.length === 0 ? (
+                            <tab.icon className="w-3.5 h-3.5" />
+                            {tab.label}
+                            <span className={cn(
+                                "px-1.5 py-0.5 rounded-full text-[10px] font-bold min-w-[20px]",
+                                activeTab === tab.id 
+                                    ? "bg-current/20" 
+                                    : "bg-zinc-800 text-zinc-500"
+                            )}>
+                                {tab.count}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                {/* Content Section */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-zinc-900/30 max-h-[50vh]">
+                    {!executionId && activeTab !== 'history' ? (
+                        /* No Execution State */
                         <div className="flex flex-col items-center justify-center h-full py-8">
-                            <div className="p-4 rounded-xl bg-zinc-800/50 mb-4">
-                                <History className="w-8 h-8 text-zinc-500" />
+                            <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 mb-5">
+                                <Zap className="w-10 h-10 text-emerald-400" />
                             </div>
-                            <p className="text-sm font-medium text-zinc-300 mb-1">No History Yet</p>
+                            <h3 className="text-base font-semibold text-zinc-100 mb-1">Ready to Execute</h3>
+                            <p className="text-sm text-zinc-500 text-center mb-5 max-w-[250px]">
+                                Run your workflow to see live execution logs and results
+                            </p>
+                            <Button
+                                onClick={onExecute}
+                                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-500/20"
+                            >
+                                <Play className="w-4 h-4 mr-2" />
+                                Execute Workflow
+                            </Button>
+                        </div>
+                    ) : activeTab === 'history' ? (
+                        /* History Tab */
+                        executionHistory.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full py-8">
+                                <div className="p-4 rounded-xl bg-zinc-800/50 mb-4">
+                                    <History className="w-8 h-8 text-zinc-500" />
+                                </div>
+                                <p className="text-sm font-medium text-zinc-300 mb-1">No History Yet</p>
                             <p className="text-xs text-zinc-500">
                                 Completed executions will appear here
                             </p>
@@ -395,16 +383,16 @@ export default function ExecutionMonitor({
                                     >
                                         <button
                                             onClick={() => toggleHistoryExpanded(historyItem.executionId)}
-                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 dark:hover:bg-black/5 transition-colors"
+                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
                                                 {expandedHistory.has(historyItem.executionId) ? (
-                                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                                    <ChevronDown className="w-4 h-4 text-zinc-500" />
                                                 ) : (
-                                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                                    <ChevronRight className="w-4 h-4 text-zinc-500" />
                                                 )}
                                                 <config.icon className={cn("w-4 h-4", config.color)} />
-                                                <span className="text-xs font-mono text-muted-foreground">
+                                                <span className="text-xs font-mono text-zinc-500">
                                                     {formatTime(historyItem.timestamp)}
                                                 </span>
                                                 <span className={cn(
@@ -414,29 +402,29 @@ export default function ExecutionMonitor({
                                                     {config.label}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-2 text-xs text-zinc-500">
                                                 <Cpu className="w-3.5 h-3.5" />
                                                 {historyItem.results.length} agent{historyItem.results.length !== 1 ? 's' : ''}
                                             </div>
                                         </button>
                                         
                                         {expandedHistory.has(historyItem.executionId) && (
-                                            <div className="px-4 py-3 border-t border-border/50 bg-background/50 space-y-2">
+                                            <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-900/50 space-y-2">
                                                 {historyItem.results.map((result) => (
-                                                    <div key={result.agentId} className="p-3 rounded-lg bg-muted/50 border border-border">
+                                                    <div key={result.agentId} className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
                                                         <div className="flex items-center justify-between mb-2">
                                                             <div className="flex items-center gap-2">
-                                                                <Bot className="w-3.5 h-3.5 text-primary" />
-                                                                <span className="text-xs font-medium text-foreground">
+                                                                <Bot className="w-3.5 h-3.5 text-purple-400" />
+                                                                <span className="text-xs font-medium text-zinc-200">
                                                                     {result.agentType || result.agentId}
                                                                 </span>
                                                             </div>
-                                                            <span className="text-[10px] text-muted-foreground font-mono">
+                                                            <span className="text-[10px] text-zinc-500 font-mono">
                                                                 {result.model}
                                                             </span>
                                                         </div>
                                                         {result.output !== null && result.output !== undefined && (
-                                                            <div className="text-xs text-muted-foreground line-clamp-3 font-mono bg-background/50 rounded p-2">
+                                                            <div className="text-xs text-zinc-400 line-clamp-3 font-mono bg-zinc-900/50 rounded p-2">
                                                                 {(() => {
                                                                     const output = result.output;
                                                                     if (typeof output === 'string') {
@@ -459,13 +447,13 @@ export default function ExecutionMonitor({
                     /* Results Tab */
                     results.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full py-8">
-                            <div className="p-4 rounded-xl bg-muted/50 mb-4">
-                                <FileText className={cn("w-8 h-8", execution?.status === 'running' ? "text-purple-400 animate-pulse" : "text-muted-foreground")} />
+                            <div className="p-4 rounded-xl bg-zinc-800/50 mb-4">
+                                <FileText className={cn("w-8 h-8", execution?.status === 'running' ? "text-purple-400 animate-pulse" : "text-zinc-500")} />
                             </div>
-                            <p className="text-sm font-medium text-foreground mb-1">
+                            <p className="text-sm font-medium text-zinc-200 mb-1">
                                 {execution?.status === 'running' ? 'Processing...' : 'No Results'}
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-zinc-500">
                                 {execution?.status === 'running' ? 'Results will appear as agents complete' : 'No results available'}
                             </p>
                         </div>
@@ -483,18 +471,18 @@ export default function ExecutionMonitor({
                                     >
                                         <button
                                             onClick={() => toggleResultExpanded(result.agentId)}
-                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 dark:hover:bg-black/5 transition-colors"
+                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
                                                 {expandedResults.has(result.agentId) ? (
-                                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                                    <ChevronDown className="w-4 h-4 text-zinc-500" />
                                                 ) : (
-                                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                                    <ChevronRight className="w-4 h-4 text-zinc-500" />
                                                 )}
-                                                <div className="p-1.5 rounded-lg bg-primary/10">
-                                                    <Bot className="w-4 h-4 text-primary" />
+                                                <div className="p-1.5 rounded-lg bg-purple-500/20">
+                                                    <Bot className="w-4 h-4 text-purple-400" />
                                                 </div>
-                                                <span className="text-sm font-medium text-foreground">
+                                                <span className="text-sm font-medium text-zinc-200">
                                                     {result.agentType || result.agentId}
                                                 </span>
                                                 <span className={cn(
@@ -504,7 +492,7 @@ export default function ExecutionMonitor({
                                                     {resultConfig.label}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-3 text-xs text-zinc-500">
                                                 <span className="flex items-center gap-1">
                                                     <Timer className="w-3 h-3" />
                                                     {result.latencyMs}ms
@@ -514,7 +502,7 @@ export default function ExecutionMonitor({
                                         </button>
                                         
                                         {expandedResults.has(result.agentId) && (
-                                            <div className="px-4 py-3 border-t border-border/50 bg-background/50">
+                                            <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-900/50">
                                                 {result.error ? (
                                                     <div className="text-sm text-red-400 font-mono whitespace-pre-wrap p-3 rounded-lg bg-red-500/5 border border-red-500/20">
                                                         {result.error}
@@ -529,7 +517,7 @@ export default function ExecutionMonitor({
                                                                     result.agentId
                                                                 );
                                                             }}
-                                                            className="absolute top-2 right-2 p-1.5 rounded-md bg-background/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                                            className="absolute top-2 right-2 p-1.5 rounded-md bg-zinc-800/80 hover:bg-zinc-700 text-zinc-500 hover:text-zinc-200 transition-colors"
                                                         >
                                                             {copiedId === result.agentId ? (
                                                                 <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -537,20 +525,20 @@ export default function ExecutionMonitor({
                                                                 <Copy className="w-3.5 h-3.5" />
                                                             )}
                                                         </button>
-                                                        <div className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed max-h-[300px] overflow-y-auto p-3 rounded-lg bg-muted/30 border border-border">
+                                                        <div className="text-sm text-zinc-200 whitespace-pre-wrap font-mono leading-relaxed max-h-[300px] overflow-y-auto p-3 rounded-lg bg-zinc-800/30 border border-zinc-700/50">
                                                             {typeof result.output === 'string' 
                                                                 ? result.output 
                                                                 : JSON.stringify(result.output, null, 2)}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="text-sm text-muted-foreground italic p-3 rounded-lg bg-muted/30">
+                                                    <div className="text-sm text-zinc-500 italic p-3 rounded-lg bg-zinc-800/30">
                                                         No output
                                                     </div>
                                                 )}
-                                                <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
-                                                    <span>Model: <span className="text-foreground font-medium">{result.model}</span></span>
-                                                    <span>Provider: <span className="text-foreground font-medium">{result.provider}</span></span>
+                                                <div className="mt-3 pt-3 border-t border-zinc-800/50 flex items-center justify-between text-xs text-zinc-500">
+                                                    <span>Model: <span className="text-zinc-200 font-medium">{result.model}</span></span>
+                                                    <span>Provider: <span className="text-zinc-200 font-medium">{result.provider}</span></span>
                                                 </div>
                                             </div>
                                         )}
@@ -562,11 +550,11 @@ export default function ExecutionMonitor({
                 ) : logs.length === 0 ? (
                     /* Empty Logs State */
                     <div className="flex flex-col items-center justify-center h-full py-8">
-                        <div className="p-4 rounded-xl bg-muted/50 mb-4">
+                        <div className="p-4 rounded-xl bg-zinc-800/50 mb-4">
                             <Activity className="w-8 h-8 text-purple-400 animate-pulse" />
                         </div>
-                        <p className="text-sm font-medium text-foreground mb-1">Waiting for Logs</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm font-medium text-zinc-200 mb-1">Waiting for Logs</p>
+                        <p className="text-xs text-zinc-500">
                             Logs will stream in real-time
                         </p>
                     </div>
@@ -579,8 +567,8 @@ export default function ExecutionMonitor({
                                 error: { bg: 'bg-red-500/5', border: 'border-red-500/20', text: 'text-red-400', dot: 'bg-red-400' },
                                 success: { bg: 'bg-emerald-500/5', border: 'border-emerald-500/20', text: 'text-emerald-400', dot: 'bg-emerald-400' },
                                 warning: { bg: 'bg-amber-500/5', border: 'border-amber-500/20', text: 'text-amber-400', dot: 'bg-amber-400' },
-                                info: { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-primary' },
-                            }[logLevel || 'info'] || { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-primary' };
+                                info: { bg: 'bg-zinc-800/50', border: 'border-zinc-700/50', text: 'text-zinc-200', dot: 'bg-purple-400' },
+                            }[logLevel || 'info'] || { bg: 'bg-zinc-800/50', border: 'border-zinc-700/50', text: 'text-zinc-200', dot: 'bg-purple-400' };
 
                             return (
                                 <div
@@ -593,13 +581,13 @@ export default function ExecutionMonitor({
                                     <div className="flex items-start gap-3">
                                         <div className="flex items-center gap-2 shrink-0 mt-0.5">
                                             <span className={cn("w-1.5 h-1.5 rounded-full", logConfig.dot)} />
-                                            <span className="text-[10px] font-mono text-muted-foreground">
+                                            <span className="text-[10px] font-mono text-zinc-500">
                                                 {formatTime(log.timestamp)}
                                             </span>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             {log.agentId && (
-                                                <span className="inline-flex items-center gap-1 text-xs text-primary mr-2 font-medium">
+                                                <span className="inline-flex items-center gap-1 text-xs text-purple-400 mr-2 font-medium">
                                                     <Bot className="w-3 h-3" />
                                                     {log.agentId}
                                                 </span>
@@ -608,10 +596,10 @@ export default function ExecutionMonitor({
                                                 {log.message}
                                             </span>
                                             {log.details && (
-                                                <div className="mt-1.5 text-xs text-muted-foreground font-mono bg-background/50 rounded px-2 py-1">
+                                                <div className="mt-1.5 text-xs text-zinc-500 font-mono bg-zinc-900/50 rounded px-2 py-1">
                                                     {Object.entries(log.details).map(([key, val]) => (
                                                         <span key={key} className="mr-3">
-                                                            <span className="text-primary">{key}</span>: {JSON.stringify(val)}
+                                                            <span className="text-purple-400">{key}</span>: {JSON.stringify(val)}
                                                         </span>
                                                     ))}
                                                 </div>
@@ -626,33 +614,34 @@ export default function ExecutionMonitor({
                 )}
             </div>
 
-            {/* Footer Actions */}
-            <div className="px-4 py-3 border-t border-zinc-800/60 bg-zinc-900/50 flex items-center justify-between rounded-b-2xl">
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
-                    <Terminal className="w-3.5 h-3.5" />
-                    {logs.length} log entries
-                </div>
-                <div className="flex items-center gap-2">
-                    {execution?.status === 'running' && (
+                {/* Footer Actions */}
+                <div className="px-4 py-3 border-t border-zinc-800 bg-zinc-900/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-zinc-500">
+                        <Terminal className="w-3.5 h-3.5" />
+                        {logs.length} log entries
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {execution?.status === 'running' && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+                            >
+                                <Pause className="w-3.5 h-3.5 mr-1.5" />
+                                Stop
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+                            onClick={onExecute}
+                            disabled={execution?.status === 'running'}
+                            className="h-8 bg-transparent border-zinc-700 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/30 disabled:opacity-50"
                         >
-                            <Pause className="w-3.5 h-3.5 mr-1.5" />
-                            Stop
+                            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                            Re-run
                         </Button>
-                    )}
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={onExecute}
-                        disabled={execution?.status === 'running'}
-                        className="h-8 bg-transparent border-zinc-700 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/30 disabled:opacity-50"
-                    >
-                        <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-                        Re-run
-                    </Button>
+                    </div>
                 </div>
             </div>
         </div>

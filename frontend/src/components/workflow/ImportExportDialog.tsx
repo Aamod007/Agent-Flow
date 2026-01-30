@@ -347,16 +347,33 @@ function ImportExportDialog({
                 </DialogHeader>
 
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'import' | 'export')}>
-                    <TabsList className="bg-zinc-900 w-full">
-                        <TabsTrigger value="export" className="flex-1 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100">
-                            <Download className="w-4 h-4 mr-2" />
+                    <div className="flex w-full bg-zinc-900/50 p-1 rounded-lg border border-zinc-800">
+                        <button
+                            onClick={() => setActiveTab('export')}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-colors",
+                                activeTab === 'export' 
+                                    ? "bg-zinc-800 text-zinc-100" 
+                                    : "text-zinc-500 hover:text-zinc-300"
+                            )}
+                        >
+                            <Download className="w-4 h-4" />
                             Export
-                        </TabsTrigger>
-                        <TabsTrigger value="import" className="flex-1 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100">
-                            <Upload className="w-4 h-4 mr-2" />
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('import')}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-colors",
+                                activeTab === 'import' 
+                                    ? "bg-zinc-800 text-zinc-100" 
+                                    : "text-zinc-500 hover:text-zinc-300"
+                            )}
+                        >
+                            <Upload className="w-4 h-4" />
                             Import
-                        </TabsTrigger>
-                    </TabsList>
+                        </button>
+                    </div>
+                    <TabsList className="hidden" />
 
                     {/* Export Tab */}
                     <TabsContent value="export" className="space-y-4">
@@ -367,14 +384,14 @@ function ImportExportDialog({
                                     <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100">
                                         <SelectValue />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-zinc-950 border-zinc-800">
-                                        <SelectItem value="agent-flow">
+                                    <SelectContent className="bg-zinc-950 border-zinc-800 text-zinc-100">
+                                        <SelectItem value="agent-flow" className="text-zinc-100 focus:bg-zinc-800 focus:text-zinc-100">
                                             <span className="flex items-center gap-2">
                                                 <Braces className="w-4 h-4 text-indigo-400" />
                                                 Agent-Flow (Native)
                                             </span>
                                         </SelectItem>
-                                        <SelectItem value="n8n">
+                                        <SelectItem value="n8n" className="text-zinc-100 focus:bg-zinc-800 focus:text-zinc-100">
                                             <span className="flex items-center gap-2">
                                                 <FileCode className="w-4 h-4 text-orange-400" />
                                                 n8n Compatible
