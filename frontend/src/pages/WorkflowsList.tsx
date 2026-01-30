@@ -77,8 +77,8 @@ function StatusBadge({ status }: { status: string }) {
     const { icon: Icon, label, className } = config[status.toLowerCase()] || config.draft;
 
     return (
-        <span className={cn("inline-flex items-center gap-2 px-3 py-1 rounded text-sm font-medium border", className)}>
-            <Icon className="w-4 h-4" />
+        <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium border", className)}>
+            <Icon className="w-3 h-3" />
             {label}
         </span>
     );
@@ -162,18 +162,18 @@ export default function WorkflowsList() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-zinc-100">Workflows</h1>
-                    <p className="text-base text-zinc-500 mt-1">{workflows.length} workflows</p>
+                    <h1 className="text-xl font-semibold text-zinc-100">Workflows</h1>
+                    <p className="text-xs text-zinc-500 mt-0.5">{workflows.length} workflows</p>
                 </div>
 
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                     <DialogTrigger asChild>
-                        <Button size="sm" className="h-11 px-5 text-base bg-indigo-600 hover:bg-indigo-700">
-                            <Plus className="mr-2 h-5 w-5" />
+                        <Button size="sm" className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700">
+                            <Plus className="mr-1.5 h-4 w-4" />
                             New Workflow
                         </Button>
                     </DialogTrigger>
@@ -230,36 +230,36 @@ export default function WorkflowsList() {
             </div>
 
             {/* Search */}
-            <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+            <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                 <Input
                     placeholder="Search workflows..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-12 pl-12 text-base bg-zinc-900 border-zinc-800 text-zinc-300 placeholder:text-zinc-600"
+                    className="h-9 pl-9 text-sm bg-zinc-900 border-zinc-800 text-zinc-300 placeholder:text-zinc-600"
                 />
             </div>
 
             {/* Table */}
             {loading ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {[...Array(5)].map((_, i) => (
-                        <div key={i} className="h-20 rounded-lg bg-zinc-900/50 animate-pulse" />
+                        <div key={i} className="h-14 rounded-lg bg-zinc-900/50 animate-pulse" />
                     ))}
                 </div>
             ) : filteredWorkflows.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 rounded-lg border border-dashed border-zinc-800">
-                    <Workflow className="w-12 h-12 text-zinc-700 mb-4" />
-                    <p className="text-base text-zinc-400 mb-2">
+                <div className="flex flex-col items-center justify-center py-16 rounded-lg border border-dashed border-zinc-800">
+                    <Workflow className="w-10 h-10 text-zinc-700 mb-3" />
+                    <p className="text-sm text-zinc-400 mb-1">
                         {searchQuery ? "No workflows found" : "No workflows yet"}
                     </p>
                     {!searchQuery && (
                         <Button
                             size="sm"
                             onClick={() => setIsCreateOpen(true)}
-                            className="mt-4 h-10 px-5 text-sm bg-indigo-600 hover:bg-indigo-700"
+                            className="mt-3 h-8 px-4 text-sm bg-indigo-600 hover:bg-indigo-700"
                         >
-                            <Plus className="w-4 h-4 mr-2" />
+                            <Plus className="w-4 h-4 mr-1.5" />
                             Create Workflow
                         </Button>
                     )}
@@ -269,58 +269,58 @@ export default function WorkflowsList() {
                     <table className="w-full">
                         <thead>
                             <tr className="border-b border-zinc-800 bg-zinc-900/50">
-                                <th className="px-5 py-4 text-left text-sm font-medium text-zinc-500 uppercase tracking-wider">Name</th>
-                                <th className="px-5 py-4 text-left text-sm font-medium text-zinc-500 uppercase tracking-wider hidden md:table-cell">Status</th>
-                                <th className="px-5 py-4 text-left text-sm font-medium text-zinc-500 uppercase tracking-wider hidden sm:table-cell">Updated</th>
-                                <th className="px-5 py-4 text-right text-sm font-medium text-zinc-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Name</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider hidden md:table-cell">Status</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider hidden sm:table-cell">Updated</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800/50">
                             {filteredWorkflows.map((workflow) => (
                                 <tr key={workflow.id} className="hover:bg-zinc-900/30 transition-colors group">
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-2.5 rounded-md bg-indigo-500/10">
-                                                <Workflow className="w-5 h-5 text-indigo-400" />
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-md bg-indigo-500/10">
+                                                <Workflow className="w-4 h-4 text-indigo-400" />
                                             </div>
                                             <div>
                                                 <Link 
                                                     to={`/dashboard/editor/${workflow.id}`}
-                                                    className="text-base font-medium text-zinc-200 hover:text-indigo-400 transition-colors"
+                                                    className="text-sm font-medium text-zinc-200 hover:text-indigo-400 transition-colors"
                                                 >
                                                     {workflow.name}
                                                 </Link>
-                                                <p className="text-sm text-zinc-500 truncate max-w-[280px]">
+                                                <p className="text-xs text-zinc-500 truncate max-w-[240px]">
                                                     {workflow.description || "No description"}
                                                 </p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-5 py-4 hidden md:table-cell">
+                                    <td className="px-4 py-3 hidden md:table-cell">
                                         <StatusBadge status={workflow.status} />
                                     </td>
-                                    <td className="px-5 py-4 hidden sm:table-cell">
-                                        <span className="text-sm text-zinc-500">{formatDate(workflow.updatedAt)}</span>
+                                    <td className="px-4 py-3 hidden sm:table-cell">
+                                        <span className="text-xs text-zinc-500">{formatDate(workflow.updatedAt)}</span>
                                     </td>
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center justify-end gap-2">
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center justify-end gap-1">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => handleRun(workflow.id)}
                                                 disabled={runningId === workflow.id}
-                                                className="h-9 w-9 p-0 text-emerald-400 hover:text-emerald-400 hover:bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="h-8 w-8 p-0 text-emerald-400 hover:text-emerald-400 hover:bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
                                             >
                                                 {runningId === workflow.id ? (
-                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
                                                 ) : (
-                                                    <Play className="w-5 h-5" />
+                                                    <Play className="w-4 h-4" />
                                                 )}
                                             </Button>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800">
-                                                        <MoreVertical className="w-5 h-5" />
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800">
+                                                        <MoreVertical className="w-4 h-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 min-w-[140px]">

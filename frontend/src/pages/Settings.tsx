@@ -37,12 +37,14 @@ import {
     Plus,
     Trash2,
     AlertCircle,
+    Camera,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
 import type { User as UserType, UserSettings as UserSettingsType, ApiKey } from "@/lib/api";
 import { toast } from "sonner";
+import { useTheme } from "@/hooks/use-theme";
 
 interface SettingsSection {
     id: string;
@@ -80,21 +82,21 @@ function SettingsNav({
                         className={cn(
                             "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
                             isActive
-                                ? "bg-indigo-500/15 text-indigo-400"
-                                : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+                                ? "bg-primary/15 text-primary"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         )}
                     >
                         <Icon className="w-4 h-4" />
                         {section.label}
                         <ChevronRight className={cn(
                             "w-4 h-4 ml-auto transition-transform",
-                            isActive && "text-indigo-400"
+                            isActive && "text-primary"
                         )} />
                     </button>
                 );
             })}
 
-            <Separator className="my-4 bg-zinc-800" />
+            <Separator className="my-4 bg-border" />
 
             <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors">
                 <LogOut className="w-4 h-4" />
@@ -106,6 +108,9 @@ function SettingsNav({
 
 function ProfileSettings({ user, onUpdate }: { user: UserType | null; onUpdate: () => void }) {
     const [saving, setSaving] = useState(false);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -121,6 +126,9 @@ function ProfileSettings({ user, onUpdate }: { user: UserType | null; onUpdate: 
                 company: user.company || '',
                 role: user.role || ''
             });
+            if (user.avatar) {
+                setAvatarPreview(user.avatar);
+            }
         }
     }, [user]);
 
@@ -137,6 +145,52 @@ function ProfileSettings({ user, onUpdate }: { user: UserType | null; onUpdate: 
         }
     };
 
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file');
+            return;
+        }
+
+        // Validate file size (2MB max)
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('Image must be less than 2MB');
+            return;
+        }
+
+        setUploadingAvatar(true);
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            setAvatarPreview(event.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+
+        try {
+            // Upload avatar
+            const formData = new FormData();
+            formData.append('avatar', file);
+            
+            await api.uploadAvatar(formData);
+            toast.success('Avatar updated successfully');
+            onUpdate();
+        } catch (error) {
+            toast.error('Failed to upload avatar');
+            // Revert preview on error
+            setAvatarPreview(user?.avatar || null);
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
+
     const getInitials = () => {
         if (!user?.name) return 'U';
         return user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -145,66 +199,103 @@ function ProfileSettings({ user, onUpdate }: { user: UserType | null; onUpdate: 
     return (
         <div className="space-y-5">
             <div>
-                <h2 className="text-lg font-semibold text-zinc-100">Profile</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-lg font-semibold text-foreground">Profile</h2>
+                <p className="text-sm text-muted-foreground">
                     Manage your account information
                 </p>
             </div>
 
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardContent className="p-5 space-y-5">
                     <div className="flex items-center gap-5">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xl font-bold text-white">
-                            {getInitials()}
+                        <div 
+                            className="relative w-16 h-16 cursor-pointer group"
+                            onClick={handleAvatarClick}
+                        >
+                            {avatarPreview ? (
+                                <img 
+                                    src={avatarPreview} 
+                                    alt="Avatar" 
+                                    className="w-16 h-16 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xl font-bold text-white">
+                                    {getInitials()}
+                                </div>
+                            )}
+                            {/* Overlay on hover */}
+                            <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                {uploadingAvatar ? (
+                                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                                ) : (
+                                    <Camera className="w-5 h-5 text-white" />
+                                )}
+                            </div>
                         </div>
+                        <input 
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleAvatarChange}
+                            accept="image/*"
+                            className="hidden"
+                        />
                         <div>
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 bg-transparent border-zinc-800 text-zinc-300 hover:bg-zinc-900"
+                                onClick={handleAvatarClick}
+                                disabled={uploadingAvatar}
+                                className="h-8 bg-transparent border-border text-foreground hover:bg-muted"
                             >
-                                Change Avatar
+                                {uploadingAvatar ? (
+                                    <>
+                                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                        Uploading...
+                                    </>
+                                ) : (
+                                    'Change Avatar'
+                                )}
                             </Button>
-                            <p className="text-xs text-zinc-600 mt-1.5">
+                            <p className="text-xs text-muted-foreground mt-1.5">
                                 JPG, GIF or PNG. Max 2MB
                             </p>
                         </div>
                     </div>
 
-                    <Separator className="bg-zinc-800" />
+                    <Separator className="bg-border" />
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
-                            <Label className="text-sm text-zinc-300">Full Name</Label>
+                            <Label className="text-sm text-foreground">Full Name</Label>
                             <Input
                                 value={formData.name}
                                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                className="h-9 bg-zinc-950 border-zinc-800 text-zinc-200 focus:border-indigo-500/50"
+                                className="h-9 bg-background border-border text-foreground focus:border-primary/50"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-sm text-zinc-300">Email</Label>
+                            <Label className="text-sm text-foreground">Email</Label>
                             <Input
                                 type="email"
                                 value={formData.email}
                                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                className="h-9 bg-zinc-950 border-zinc-800 text-zinc-200 focus:border-indigo-500/50"
+                                className="h-9 bg-background border-border text-foreground focus:border-primary/50"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-sm text-zinc-300">Company</Label>
+                            <Label className="text-sm text-foreground">Company</Label>
                             <Input
                                 value={formData.company}
                                 onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
-                                className="h-9 bg-zinc-950 border-zinc-800 text-zinc-200 focus:border-indigo-500/50"
+                                className="h-9 bg-background border-border text-foreground focus:border-primary/50"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-sm text-zinc-300">Role</Label>
+                            <Label className="text-sm text-foreground">Role</Label>
                             <Input
                                 value={formData.role}
                                 onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-                                className="h-9 bg-zinc-950 border-zinc-800 text-zinc-200 focus:border-indigo-500/50"
+                                className="h-9 bg-background border-border text-foreground focus:border-primary/50"
                             />
                         </div>
                     </div>
@@ -216,7 +307,7 @@ function ProfileSettings({ user, onUpdate }: { user: UserType | null; onUpdate: 
                     onClick={handleSave}
                     disabled={saving}
                     size="sm"
-                    className="h-8 bg-indigo-600 hover:bg-indigo-700"
+                    className="h-8 bg-primary hover:bg-primary/90"
                 >
                     {saving ? (
                         <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -307,16 +398,16 @@ function APIKeysSettings() {
     return (
         <div className="space-y-5">
             <div>
-                <h2 className="text-lg font-semibold text-zinc-100">API Keys</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-lg font-semibold text-foreground">API Keys</h2>
+                <p className="text-sm text-muted-foreground">
                     Manage your AI model provider API keys
                 </p>
             </div>
 
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardContent className="p-5 space-y-3">
                     {keys.length === 0 ? (
-                        <div className="text-center py-8 text-zinc-500">
+                        <div className="text-center py-8 text-muted-foreground">
                             <Key className="w-10 h-10 mx-auto mb-3 opacity-50" />
                             <p className="text-sm">No API keys configured</p>
                             <p className="text-xs mt-1">Add your first API key to get started</p>
@@ -327,7 +418,7 @@ function APIKeysSettings() {
                                 key={apiKey.id}
                                 className={cn(
                                     "flex items-center justify-between p-3 rounded-lg",
-                                    "bg-zinc-950 border border-zinc-800"
+                                    "bg-background border border-border"
                                 )}
                             >
                                 <div className="flex items-center gap-3">
@@ -335,13 +426,13 @@ function APIKeysSettings() {
                                         onClick={() => handleToggleStatus(apiKey)}
                                         className={cn(
                                             "w-2 h-2 rounded-full cursor-pointer transition-colors",
-                                            apiKey.status === "active" ? "bg-emerald-500" : "bg-zinc-600"
+                                            apiKey.status === "active" ? "bg-emerald-500" : "bg-muted-foreground"
                                         )}
                                         title={`Click to ${apiKey.status === 'active' ? 'deactivate' : 'activate'}`}
                                     />
                                     <div>
-                                        <p className="text-sm font-medium text-zinc-200">{apiKey.name}</p>
-                                        <p className="text-xs font-mono text-zinc-500">
+                                        <p className="text-sm font-medium text-foreground">{apiKey.name}</p>
+                                        <p className="text-xs font-mono text-muted-foreground">
                                             {apiKey.key} • {apiKey.provider}
                                         </p>
                                     </div>
@@ -370,42 +461,42 @@ function APIKeysSettings() {
             <Button
                 onClick={() => setDialogOpen(true)}
                 size="sm"
-                className="h-8 bg-indigo-600 hover:bg-indigo-700"
+                className="h-8 bg-primary hover:bg-primary/90"
             >
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
                 Add API Key
             </Button>
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="bg-zinc-900 border-zinc-800">
+                <DialogContent className="bg-popover border-border">
                     <DialogHeader>
-                        <DialogTitle className="text-zinc-100">Add API Key</DialogTitle>
-                        <DialogDescription className="text-zinc-500">
+                        <DialogTitle className="text-foreground">Add API Key</DialogTitle>
+                        <DialogDescription className="text-muted-foreground">
                             Add a new AI provider API key to use in your workflows
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-4 py-4">
                         <div className="space-y-1.5">
-                            <Label className="text-sm text-zinc-300">Name</Label>
+                            <Label className="text-sm text-foreground">Name</Label>
                             <Input
                                 placeholder="My Gemini Key"
                                 value={newKey.name}
                                 onChange={(e) => setNewKey(prev => ({ ...prev, name: e.target.value }))}
-                                className="h-9 bg-zinc-950 border-zinc-800 text-zinc-200"
+                                className="h-9 bg-background border-border text-foreground"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label className="text-sm text-zinc-300">Provider</Label>
+                            <Label className="text-sm text-foreground">Provider</Label>
                             <Select
                                 value={newKey.provider}
                                 onValueChange={(value) => setNewKey(prev => ({ ...prev, provider: value }))}
                             >
-                                <SelectTrigger className="h-9 bg-zinc-950 border-zinc-800 text-zinc-200">
+                                <SelectTrigger className="h-9 bg-background border-border text-foreground">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-zinc-900 border-zinc-800">
+                                <SelectContent className="bg-popover border-border">
                                     <SelectItem value="gemini">Gemini (Google)</SelectItem>
                                     <SelectItem value="openai">OpenAI</SelectItem>
                                     <SelectItem value="groq">Groq</SelectItem>
@@ -415,13 +506,13 @@ function APIKeysSettings() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label className="text-sm text-zinc-300">API Key</Label>
+                            <Label className="text-sm text-foreground">API Key</Label>
                             <Input
                                 type="password"
                                 placeholder="sk-..."
                                 value={newKey.key}
                                 onChange={(e) => setNewKey(prev => ({ ...prev, key: e.target.value }))}
-                                className="h-9 bg-zinc-950 border-zinc-800 text-zinc-200"
+                                className="h-9 bg-background border-border text-foreground"
                             />
                         </div>
 
@@ -438,7 +529,7 @@ function APIKeysSettings() {
                             variant="outline"
                             size="sm"
                             onClick={() => setDialogOpen(false)}
-                            className="h-8 bg-transparent border-zinc-800 text-zinc-300"
+                            className="h-8 bg-transparent border-border text-foreground"
                         >
                             Cancel
                         </Button>
@@ -446,7 +537,7 @@ function APIKeysSettings() {
                             onClick={handleAddKey}
                             disabled={saving}
                             size="sm"
-                            className="h-8 bg-indigo-600 hover:bg-indigo-700"
+                            className="h-8 bg-primary hover:bg-primary/90"
                         >
                             {saving ? (
                                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -464,21 +555,23 @@ function APIKeysSettings() {
 
 function AppearanceSettings({ settings, onUpdate }: { settings: UserSettingsType | null; onUpdate: () => void }) {
     const [saving, setSaving] = useState(false);
-    const [theme, setTheme] = useState<string>("dark");
+    const { theme, setTheme: applyTheme } = useTheme();
     const [accentColor, setAccentColor] = useState<string>("indigo");
 
     useEffect(() => {
         if (settings) {
-            setTheme(settings.theme);
             setAccentColor(settings.accentColor);
         }
     }, [settings]);
 
-    const handleSaveTheme = async (newTheme: string) => {
-        setTheme(newTheme);
+    const handleSaveTheme = async (newTheme: "dark" | "light" | "system") => {
         setSaving(true);
         try {
+            // Apply theme visually first
+            applyTheme(newTheme);
+            // Then save to API
             await api.updateUserSettings({ theme: newTheme });
+            toast.success(`Theme changed to ${newTheme}`);
             onUpdate();
         } catch (error) {
             toast.error('Failed to update theme');
@@ -515,17 +608,17 @@ function AppearanceSettings({ settings, onUpdate }: { settings: UserSettingsType
     return (
         <div className="space-y-5">
             <div>
-                <h2 className="text-lg font-semibold text-zinc-100">Appearance</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-lg font-semibold text-foreground">Appearance</h2>
+                <p className="text-sm text-muted-foreground">
                     Customize the look and feel of the application
                 </p>
             </div>
 
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-sm text-zinc-200 flex items-center gap-2">
+                    <CardTitle className="text-sm text-card-foreground flex items-center gap-2">
                         Theme
-                        {saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />}
+                        {saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -537,22 +630,22 @@ function AppearanceSettings({ settings, onUpdate }: { settings: UserSettingsType
                                 className={cn(
                                     "flex-1 flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-colors",
                                     theme === id
-                                        ? "bg-indigo-500/10 border-indigo-500"
-                                        : "bg-zinc-950 border-zinc-800 hover:border-zinc-700"
+                                        ? "bg-primary/10 border-primary"
+                                        : "bg-background border-border hover:border-muted-foreground"
                                 )}
                             >
                                 <Icon className={cn(
                                     "w-5 h-5",
-                                    theme === id ? "text-indigo-400" : "text-zinc-500"
+                                    theme === id ? "text-primary" : "text-muted-foreground"
                                 )} />
                                 <span className={cn(
                                     "text-sm font-medium",
-                                    theme === id ? "text-indigo-400" : "text-zinc-300"
+                                    theme === id ? "text-primary" : "text-foreground"
                                 )}>
                                     {label}
                                 </span>
                                 {theme === id && (
-                                    <Check className="w-3.5 h-3.5 text-indigo-400" />
+                                    <Check className="w-3.5 h-3.5 text-primary" />
                                 )}
                             </button>
                         ))}
@@ -560,9 +653,9 @@ function AppearanceSettings({ settings, onUpdate }: { settings: UserSettingsType
                 </CardContent>
             </Card>
 
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-sm text-zinc-200">Accent Color</CardTitle>
+                    <CardTitle className="text-sm text-card-foreground">Accent Color</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex gap-2.5">
@@ -573,7 +666,7 @@ function AppearanceSettings({ settings, onUpdate }: { settings: UserSettingsType
                                 className={cn(
                                     "w-7 h-7 rounded-full transition-transform hover:scale-110",
                                     color.class,
-                                    accentColor === color.id && "ring-2 ring-white ring-offset-2 ring-offset-zinc-900"
+                                    accentColor === color.id && "ring-2 ring-white ring-offset-2 ring-offset-background"
                                 )}
                             />
                         ))}
@@ -597,27 +690,27 @@ function IntegrationsSettings() {
     return (
         <div className="space-y-5">
             <div>
-                <h2 className="text-lg font-semibold text-zinc-100">Integrations</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-lg font-semibold text-foreground">Integrations</h2>
+                <p className="text-sm text-muted-foreground">
                     Connect external services to extend your workflows
                 </p>
             </div>
 
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardContent className="p-5 space-y-3">
                     {integrations.map((integration) => (
                         <div
                             key={integration.id}
                             className={cn(
                                 "flex items-center justify-between p-3 rounded-lg",
-                                "bg-zinc-950 border border-zinc-800"
+                                "bg-background border border-border"
                             )}
                         >
                             <div className="flex items-center gap-3">
                                 <span className="text-2xl">{integration.icon}</span>
                                 <div>
-                                    <p className="text-sm font-medium text-zinc-200">{integration.name}</p>
-                                    <p className="text-xs text-zinc-500">{integration.description}</p>
+                                    <p className="text-sm font-medium text-foreground">{integration.name}</p>
+                                    <p className="text-xs text-muted-foreground">{integration.description}</p>
                                 </div>
                             </div>
                             <Button
@@ -627,7 +720,7 @@ function IntegrationsSettings() {
                                     "h-7",
                                     integration.connected
                                         ? "bg-transparent border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
-                                        : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                        : "bg-primary hover:bg-primary/90 text-white"
                                 )}
                             >
                                 {integration.connected ? (
@@ -662,63 +755,63 @@ function SecuritySettings() {
     return (
         <div className="space-y-5">
             <div>
-                <h2 className="text-lg font-semibold text-zinc-100">Security</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-lg font-semibold text-foreground">Security</h2>
+                <p className="text-sm text-muted-foreground">
                     Manage your password and security settings
                 </p>
             </div>
 
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-sm text-zinc-200">Change Password</CardTitle>
+                    <CardTitle className="text-sm text-card-foreground">Change Password</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-1.5">
-                        <Label className="text-sm text-zinc-300">Current Password</Label>
+                        <Label className="text-sm text-foreground">Current Password</Label>
                         <Input
                             type="password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="h-9 bg-zinc-950 border-zinc-800 text-zinc-200"
+                            className="h-9 bg-background border-border text-foreground"
                         />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
-                            <Label className="text-sm text-zinc-300">New Password</Label>
+                            <Label className="text-sm text-foreground">New Password</Label>
                             <Input
                                 type="password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className="h-9 bg-zinc-950 border-zinc-800 text-zinc-200"
+                                className="h-9 bg-background border-border text-foreground"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-sm text-zinc-300">Confirm Password</Label>
+                            <Label className="text-sm text-foreground">Confirm Password</Label>
                             <Input
                                 type="password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="h-9 bg-zinc-950 border-zinc-800 text-zinc-200"
+                                className="h-9 bg-background border-border text-foreground"
                             />
                         </div>
                     </div>
-                    <Button size="sm" className="h-8 bg-indigo-600 hover:bg-indigo-700">
+                    <Button size="sm" className="h-8 bg-primary hover:bg-primary/90">
                         Update Password
                     </Button>
                 </CardContent>
             </Card>
 
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-sm text-zinc-200">Two-Factor Authentication</CardTitle>
+                    <CardTitle className="text-sm text-card-foreground">Two-Factor Authentication</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-zinc-300">
+                            <p className="text-sm text-foreground">
                                 {twoFactorEnabled ? 'Two-factor authentication is enabled' : 'Add an extra layer of security'}
                             </p>
-                            <p className="text-xs text-zinc-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                                 Use an authenticator app to generate verification codes
                             </p>
                         </div>
@@ -726,7 +819,7 @@ function SecuritySettings() {
                             onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
                             className={cn(
                                 "w-10 h-5 rounded-full transition-colors relative",
-                                twoFactorEnabled ? "bg-indigo-600" : "bg-zinc-800"
+                                twoFactorEnabled ? "bg-primary" : "bg-muted"
                             )}
                         >
                             <div className={cn(
@@ -738,9 +831,9 @@ function SecuritySettings() {
                 </CardContent>
             </Card>
 
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-sm text-zinc-200">Active Sessions</CardTitle>
+                    <CardTitle className="text-sm text-card-foreground">Active Sessions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     {sessions.map((session) => (
@@ -748,7 +841,7 @@ function SecuritySettings() {
                             key={session.id}
                             className={cn(
                                 "flex items-center justify-between p-3 rounded-lg",
-                                "bg-zinc-950 border border-zinc-800"
+                                "bg-background border border-border"
                             )}
                         >
                             <div className="flex items-center gap-3">
@@ -756,8 +849,8 @@ function SecuritySettings() {
                                     <div className="w-2 h-2 rounded-full bg-emerald-500" />
                                 )}
                                 <div>
-                                    <p className="text-sm font-medium text-zinc-200">{session.device}</p>
-                                    <p className="text-xs text-zinc-500">
+                                    <p className="text-sm font-medium text-foreground">{session.device}</p>
+                                    <p className="text-xs text-muted-foreground">
                                         {session.location} • {session.lastActive}
                                     </p>
                                 </div>
@@ -794,23 +887,23 @@ function BillingSettings() {
     return (
         <div className="space-y-5">
             <div>
-                <h2 className="text-lg font-semibold text-zinc-100">Billing</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-lg font-semibold text-foreground">Billing</h2>
+                <p className="text-sm text-muted-foreground">
                     Manage your subscription and usage
                 </p>
             </div>
 
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-sm text-zinc-200">Current Usage</CardTitle>
+                    <CardTitle className="text-sm text-card-foreground">Current Usage</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-zinc-400">Workflows</span>
-                            <span className="text-sm text-zinc-300">{usage.workflows.used} / {usage.workflows.limit}</span>
+                            <span className="text-sm text-muted-foreground">Workflows</span>
+                            <span className="text-sm text-foreground">{usage.workflows.used} / {usage.workflows.limit}</span>
                         </div>
-                        <div className="h-1.5 bg-zinc-950 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
                                 className="h-full bg-indigo-500 rounded-full"
                                 style={{ width: `${(usage.workflows.used / usage.workflows.limit) * 100}%` }}
@@ -819,10 +912,10 @@ function BillingSettings() {
                     </div>
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-zinc-400">Executions this month</span>
-                            <span className="text-sm text-zinc-300">{usage.executions.used} / {usage.executions.limit}</span>
+                            <span className="text-sm text-muted-foreground">Executions this month</span>
+                            <span className="text-sm text-foreground">{usage.executions.used} / {usage.executions.limit}</span>
                         </div>
-                        <div className="h-1.5 bg-zinc-950 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
                                 className="h-full bg-purple-500 rounded-full"
                                 style={{ width: `${(usage.executions.used / usage.executions.limit) * 100}%` }}
@@ -833,13 +926,13 @@ function BillingSettings() {
             </Card>
 
             <div>
-                <h3 className="text-sm font-medium text-zinc-300 mb-3">Available Plans</h3>
+                <h3 className="text-sm font-medium text-foreground mb-3">Available Plans</h3>
                 <div className="grid gap-4 md:grid-cols-3">
                     {plans.map((plan) => (
                         <Card
                             key={plan.id}
                             className={cn(
-                                "bg-zinc-900/50 border-zinc-800/50 relative",
+                                "bg-card border-border relative",
                                 plan.popular && "border-indigo-500/50 ring-1 ring-indigo-500/20"
                             )}
                         >
@@ -849,14 +942,14 @@ function BillingSettings() {
                                 </div>
                             )}
                             <CardContent className="p-4">
-                                <h4 className="text-sm font-semibold text-zinc-100">{plan.name}</h4>
+                                <h4 className="text-sm font-semibold text-foreground">{plan.name}</h4>
                                 <div className="mt-2">
-                                    <span className="text-2xl font-bold text-zinc-100">{plan.price}</span>
-                                    <span className="text-sm text-zinc-500">{plan.period}</span>
+                                    <span className="text-2xl font-bold text-foreground">{plan.price}</span>
+                                    <span className="text-sm text-muted-foreground">{plan.period}</span>
                                 </div>
                                 <ul className="mt-3 space-y-1.5">
                                     {plan.features.map((feature, i) => (
-                                        <li key={i} className="flex items-center gap-2 text-xs text-zinc-400">
+                                        <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
                                             <Check className="w-3.5 h-3.5 text-emerald-400" />
                                             {feature}
                                         </li>
@@ -867,8 +960,8 @@ function BillingSettings() {
                                     className={cn(
                                         "w-full mt-4 h-8",
                                         plan.current
-                                            ? "bg-zinc-800 text-zinc-400 cursor-default hover:bg-zinc-800"
-                                            : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                            ? "bg-muted text-muted-foreground cursor-default hover:bg-muted"
+                                            : "bg-primary hover:bg-primary/90 text-white"
                                     )}
                                     disabled={plan.current}
                                 >
@@ -891,6 +984,14 @@ function NotificationsSettings({ settings, onUpdate }: { settings: UserSettingsT
         workflowFailed: true,
         weeklyReport: false,
     });
+    const [browserPermission, setBrowserPermission] = useState<NotificationPermission>('default');
+
+    useEffect(() => {
+        // Check current browser notification permission
+        if ('Notification' in window) {
+            setBrowserPermission(Notification.permission);
+        }
+    }, []);
 
     useEffect(() => {
         if (settings) {
@@ -904,18 +1005,68 @@ function NotificationsSettings({ settings, onUpdate }: { settings: UserSettingsT
         }
     }, [settings]);
 
+    const requestBrowserPermission = async () => {
+        if (!('Notification' in window)) {
+            toast.error('Browser notifications are not supported');
+            return;
+        }
+
+        try {
+            const permission = await Notification.requestPermission();
+            setBrowserPermission(permission);
+            
+            if (permission === 'granted') {
+                toast.success('Browser notifications enabled!');
+                // Show a test notification
+                new Notification('AgentFlow', {
+                    body: 'Browser notifications are now enabled!',
+                    icon: '/favicon.ico'
+                });
+            } else if (permission === 'denied') {
+                toast.error('Browser notifications were denied. Please enable them in your browser settings.');
+            }
+        } catch (error) {
+            toast.error('Failed to request notification permission');
+        }
+    };
+
     const toggleNotification = async (key: keyof typeof notifications) => {
+        // Special handling for browser notifications
+        if (key === 'browserNotifications' && !notifications[key]) {
+            if (browserPermission !== 'granted') {
+                await requestBrowserPermission();
+                if (Notification.permission !== 'granted') {
+                    return; // Don't toggle if permission wasn't granted
+                }
+            }
+        }
+
         const newValue = !notifications[key];
         setNotifications(prev => ({ ...prev, [key]: newValue }));
 
         try {
             await api.updateUserSettings({ [key]: newValue });
+            toast.success(`${key === 'browserNotifications' ? 'Browser notifications' : 'Setting'} ${newValue ? 'enabled' : 'disabled'}`);
             onUpdate();
         } catch (error) {
             // Revert on error
             setNotifications(prev => ({ ...prev, [key]: !newValue }));
             toast.error('Failed to update notification settings');
         }
+    };
+
+    const sendTestNotification = () => {
+        if (browserPermission !== 'granted') {
+            toast.error('Please enable browser notifications first');
+            return;
+        }
+
+        new Notification('AgentFlow Test', {
+            body: 'This is a test notification. Your notifications are working!',
+            icon: '/favicon.ico',
+            tag: 'test-notification'
+        });
+        toast.success('Test notification sent!');
     };
 
     const notificationItems = [
@@ -929,27 +1080,58 @@ function NotificationsSettings({ settings, onUpdate }: { settings: UserSettingsT
     return (
         <div className="space-y-5">
             <div>
-                <h2 className="text-lg font-semibold text-zinc-100">Notifications</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-lg font-semibold text-foreground">Notifications</h2>
+                <p className="text-sm text-muted-foreground">
                     Configure how you want to receive notifications
                 </p>
             </div>
 
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            {/* Browser Permission Status */}
+            {browserPermission !== 'granted' && (
+                <Card className="bg-amber-500/10 border-amber-500/20">
+                    <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" />
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-amber-200">
+                                    Browser notifications are {browserPermission === 'denied' ? 'blocked' : 'not enabled'}
+                                </p>
+                                <p className="text-xs text-amber-300/70 mt-1">
+                                    {browserPermission === 'denied' 
+                                        ? 'You have blocked notifications. Please enable them in your browser settings.'
+                                        : 'Enable browser notifications to receive alerts when workflows complete or fail.'}
+                                </p>
+                                {browserPermission !== 'denied' && (
+                                    <Button
+                                        onClick={requestBrowserPermission}
+                                        size="sm"
+                                        className="mt-3 h-7 bg-amber-600 hover:bg-amber-700 text-white"
+                                    >
+                                        <Bell className="w-3.5 h-3.5 mr-1.5" />
+                                        Enable Notifications
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            <Card className="bg-card border-border">
                 <CardContent className="p-5 space-y-3">
                     {notificationItems.map(({ key, label, desc }) => (
                         <div key={key} className="flex items-center justify-between py-2">
                             <div>
-                                <p className="text-sm font-medium text-zinc-200">{label}</p>
-                                <p className="text-xs text-zinc-500">{desc}</p>
+                                <p className="text-sm font-medium text-foreground">{label}</p>
+                                <p className="text-xs text-muted-foreground">{desc}</p>
                             </div>
                             <button
                                 onClick={() => toggleNotification(key)}
                                 className={cn(
                                     "w-10 h-5 rounded-full transition-colors relative",
                                     notifications[key]
-                                        ? "bg-indigo-600"
-                                        : "bg-zinc-800"
+                                        ? "bg-primary"
+                                        : "bg-muted"
                                 )}
                             >
                                 <div className={cn(
@@ -963,6 +1145,19 @@ function NotificationsSettings({ settings, onUpdate }: { settings: UserSettingsT
                     ))}
                 </CardContent>
             </Card>
+
+            {/* Test Notification Button */}
+            {browserPermission === 'granted' && (
+                <Button
+                    onClick={sendTestNotification}
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                >
+                    <Bell className="w-3.5 h-3.5 mr-1.5" />
+                    Send Test Notification
+                </Button>
+            )}
         </div>
     );
 }
@@ -1018,7 +1213,7 @@ export default function Settings() {
                 return <BillingSettings />;
             default:
                 return (
-                    <div className="text-center py-12 text-zinc-500">
+                    <div className="text-center py-12 text-muted-foreground">
                         <p className="text-sm">This section is coming soon</p>
                     </div>
                 );
@@ -1028,17 +1223,17 @@ export default function Settings() {
     return (
         <div className="space-y-5">
             <div>
-                <h1 className="text-xl font-semibold text-zinc-100">
+                <h1 className="text-xl font-semibold text-foreground">
                     Settings
                 </h1>
-                <p className="text-zinc-500 text-sm mt-0.5">
+                <p className="text-muted-foreground text-sm mt-0.5">
                     Manage your account and preferences
                 </p>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-5">
                 {/* Sidebar */}
-                <Card className="lg:w-56 shrink-0 bg-zinc-900/50 border-zinc-800/50">
+                <Card className="lg:w-56 shrink-0 bg-card border-border">
                     <CardContent className="p-3">
                         <SettingsNav
                             activeSection={activeSection}

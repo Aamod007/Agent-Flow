@@ -8,17 +8,35 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  company   String?
-  role      String?
-  avatar    String?
-  workflows Workflow[]
-  apiKeys   ApiKey[]
-  settings  UserSettings?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  email       String   @unique
+  name        String?
+  company     String?
+  role        String?
+  avatar      String?
+  workflows   Workflow[]
+  apiKeys     ApiKey[]
+  connections Connection[]
+  settings    UserSettings?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Connection {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerId  String   // e.g., "slack", "github", "notion"
+  name        String   // User-friendly name
+  credentials String   // Encrypted credentials JSON
+  status      String   @default("active") // active, expired, error
+  metadata    String?  // Additional provider-specific data
+  connectedAt DateTime @default(now())
+  lastUsed    DateTime?
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([providerId])
 }
 
 model ApiKey {
@@ -183,5 +201,44 @@ model WorkflowPermission {
 
   @@index([workflowId])
   @@index([teamId])
+  @@index([userId])
+}
+
+// ==========================================
+// COMMUNITY TEMPLATES
+// ==========================================
+
+model Template {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  category    String   // research, content, analysis, support, development
+  icon        String?  // Emoji or icon name
+  definition  String   // JSON string of nodes and edges
+  authorId    String
+  authorName  String   // Cached for display
+  isPublic    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  likes       Int      @default(0)
+  downloads   Int      @default(0)
+  version     String   @default("1.0.0")
+  tags        String[] // Array of tags
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([authorId])
+  @@index([isPublic])
+  @@index([isFeatured])
+}
+
+model TemplateLike {
+  id         String   @id @default(uuid())
+  templateId String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  @@unique([templateId, userId])
+  @@index([templateId])
   @@index([userId])
 }

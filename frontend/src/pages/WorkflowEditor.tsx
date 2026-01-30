@@ -30,6 +30,24 @@ import HttpNode from '@/components/workflow/HttpNode';
 import TransformerNode from '@/components/workflow/TransformerNode';
 import TriggerNode from '@/components/workflow/TriggerNode';
 import CodeNode from '@/components/workflow/CodeNode';
+// New n8n-style nodes
+import SetNode from '@/components/workflow/SetNode';
+import WaitNode from '@/components/workflow/WaitNode';
+import ErrorTriggerNode from '@/components/workflow/ErrorTriggerNode';
+import RespondWebhookNode from '@/components/workflow/RespondWebhookNode';
+import DatabaseNode from '@/components/workflow/DatabaseNode';
+import StickyNoteNode from '@/components/workflow/StickyNoteNode';
+import SubWorkflowNode from '@/components/workflow/SubWorkflowNode';
+import GroupNode from '@/components/workflow/GroupNode';
+// Custom edge types
+import { MemoizedCustomEdge } from '@/components/workflow/ConnectionTypes';
+// Additional dialogs and panels
+import ImportExportDialog from '@/components/workflow/ImportExportDialog';
+import CredentialManager from '@/components/workflow/CredentialManager';
+import WebhookManager from '@/components/workflow/WebhookManager';
+import ScheduleManager from '@/components/workflow/ScheduleManager';
+import DebugPanel, { type Breakpoint } from '@/components/workflow/DebugPanel';
+import PinDataPanel, { usePinnedData } from '@/components/workflow/PinDataPanel';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -40,9 +58,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Save, Loader2, Play, RotateCcw, Activity, MessageSquare } from 'lucide-react';
+import { Save, Loader2, Play, RotateCcw, Activity, Download, Key, Webhook, Clock, Bug, Sparkles, ChevronLeft } from 'lucide-react';
 import { toast } from "sonner";
 import { api } from '@/lib/api';
+import AIAssistant from '@/components/workflow/AIAssistant';
+import { Link } from 'react-router-dom';
 
 let id = 0;
 const getId = () => `agent_${id++}`;
@@ -58,6 +78,20 @@ const nodeTypes = {
     transformer: TransformerNode,
     trigger: TriggerNode,
     code: CodeNode,
+    // New n8n-style nodes
+    set: SetNode,
+    wait: WaitNode,
+    errorTrigger: ErrorTriggerNode,
+    respondWebhook: RespondWebhookNode,
+    database: DatabaseNode,
+    stickyNote: StickyNoteNode,
+    subWorkflow: SubWorkflowNode,
+    group: GroupNode,
+};
+
+// Custom edge types
+const edgeTypes = {
+    custom: MemoizedCustomEdge,
 };
 
 // Define the node type for this workflow
@@ -80,6 +114,18 @@ function EditorContent() {
     const [currentExecutionId, setCurrentExecutionId] = useState<string | null>(null);
     const [showInputDialog, setShowInputDialog] = useState(false);
     const [workflowInput, setWorkflowInput] = useState("");
+    // New dialog states
+    const [showImportExport, setShowImportExport] = useState(false);
+    const [showCredentials, setShowCredentials] = useState(false);
+    const [showWebhooks, setShowWebhooks] = useState(false);
+    const [showSchedules, setShowSchedules] = useState(false);
+    const [showDebugPanel, setShowDebugPanel] = useState(false);
+    const [showAIAssistant, setShowAIAssistant] = useState(false);
+    const [_breakpoints, setBreakpoints] = useState<Map<string, Breakpoint>>(new Map());
+    const [_highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
+    const [showPinPanel, setShowPinPanel] = useState(false);
+    const [pinPanelNodeId, _setPinPanelNodeId] = useState<string | null>(null);
+    const { pinData, unpinData, getPinnedData } = usePinnedData();
     const { fitView } = useReactFlow();
 
     const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
@@ -183,6 +229,24 @@ function EditorContent() {
                         return 'trigger';
                     case 'code':
                         return 'code';
+                    // New n8n-style nodes
+                    case 'set':
+                        return 'set';
+                    case 'wait':
+                        return 'wait';
+                    case 'error-trigger':
+                        return 'errorTrigger';
+                    case 'respond-webhook':
+                        return 'respondWebhook';
+                    case 'database':
+                        return 'database';
+                    case 'sticky-note':
+                        return 'stickyNote';
+                    case 'sub-workflow':
+                    case 'execute-workflow':
+                        return 'subWorkflow';
+                    case 'group':
+                        return 'group';
                     default:
                         return 'agent';
                 }
@@ -214,6 +278,22 @@ function EditorContent() {
                 nodeData = { ...nodeData, triggerType };
             } else if (nodeType === 'code') {
                 nodeData = { ...nodeData, code: '// Your JavaScript code here\nreturn { output: input };', language: 'javascript' };
+            } else if (nodeType === 'set') {
+                nodeData = { ...nodeData, mode: 'manual', fields: [], keepOnlySet: false };
+            } else if (nodeType === 'wait') {
+                nodeData = { ...nodeData, waitType: 'time', duration: 5, unit: 'seconds' };
+            } else if (nodeType === 'errorTrigger') {
+                nodeData = { ...nodeData, errorTypes: ['all'], retryEnabled: false, retryAttempts: 3 };
+            } else if (nodeType === 'respondWebhook') {
+                nodeData = { ...nodeData, responseCode: 200, responseBody: '{ "success": true }', contentType: 'application/json' };
+            } else if (nodeType === 'database') {
+                nodeData = { ...nodeData, operation: 'select', connection: '', table: '' };
+            } else if (nodeType === 'stickyNote') {
+                nodeData = { ...nodeData, content: 'Add your notes here...', color: 'yellow', fontSize: 'medium' };
+            } else if (nodeType === 'subWorkflow') {
+                nodeData = { ...nodeData, workflowId: '', workflowName: '', waitForCompletion: true, inputMapping: {}, outputMapping: {} };
+            } else if (nodeType === 'group') {
+                nodeData = { ...nodeData, label: 'New Group', description: '', color: 'gray', collapsed: false, childNodeIds: [], width: 400, height: 300 };
             } else {
                 // Agent node
                 nodeData = {
@@ -349,50 +429,119 @@ function EditorContent() {
     }
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(225_15%_5%)]">
-            {/* Header */}
-            <div className="border-b border-[hsl(225_8%_18%)] px-4 py-3 flex items-center justify-between bg-[hsl(225_12%_8%)]">
+        <div className="flex flex-col h-full w-full bg-zinc-950">
+            {/* Header - n8n style */}
+            <div className="border-b border-zinc-800/60 px-4 py-2 flex items-center justify-between bg-zinc-900/80 backdrop-blur-sm shrink-0">
                 <div className="flex items-center gap-4">
+                    <Link 
+                        to="/dashboard/workflows"
+                        className="p-2 rounded-lg hover:bg-zinc-800/50 text-zinc-400 hover:text-zinc-200 transition-colors"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </Link>
+                    <div className="h-6 w-px bg-zinc-800" />
                     <div>
-                        <h2 className="text-lg font-semibold text-[hsl(220_13%_91%)]">
+                        <h2 className="text-sm font-semibold text-zinc-100">
                             {workflowName || "Untitled Workflow"}
                         </h2>
-                        <p className="text-xs text-[hsl(220_7%_45%)]">
+                        <p className="text-[10px] text-zinc-500">
                             {nodes.length} agents • {edges.length} connections
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Centered toolbar */}
+                <div className="flex items-center gap-1 bg-zinc-900/50 border border-zinc-800/50 rounded-lg p-1">
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => fitView({ padding: 0.2 })}
-                        className="bg-transparent border-[hsl(225_8%_18%)] text-[hsl(220_13%_91%)] hover:bg-[hsl(225_9%_15%)]"
+                        className="h-8 px-3 text-xs text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50"
                     >
-                        <RotateCcw className="w-4 h-4 mr-2" />
-                        Reset View
+                        <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                        Reset
                     </Button>
+                    <div className="h-5 w-px bg-zinc-800" />
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setShowMonitor(!showMonitor)}
-                        className="bg-transparent border-[hsl(225_8%_18%)] text-purple-400 hover:bg-purple-500/10 hover:text-purple-400"
+                        className={`h-8 px-3 text-xs ${showMonitor ? 'text-purple-400 bg-purple-500/10' : 'text-zinc-400'} hover:text-purple-400 hover:bg-purple-500/10`}
                     >
-                        <Activity className="w-4 h-4 mr-2" />
+                        <Activity className="w-3.5 h-3.5 mr-1.5" />
                         Monitor
                     </Button>
                     <Button
-                        variant="outline"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowCredentials(true)}
+                        className="h-8 px-3 text-xs text-zinc-400 hover:text-amber-400 hover:bg-amber-500/10"
+                    >
+                        <Key className="w-3.5 h-3.5 mr-1.5" />
+                        Credentials
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowWebhooks(true)}
+                        className="h-8 px-3 text-xs text-zinc-400 hover:text-purple-400 hover:bg-purple-500/10"
+                    >
+                        <Webhook className="w-3.5 h-3.5 mr-1.5" />
+                        Webhooks
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowSchedules(true)}
+                        className="h-8 px-3 text-xs text-zinc-400 hover:text-orange-400 hover:bg-orange-500/10"
+                    >
+                        <Clock className="w-3.5 h-3.5 mr-1.5" />
+                        Schedules
+                    </Button>
+                    <div className="h-5 w-px bg-zinc-800" />
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowDebugPanel(!showDebugPanel)}
+                        className={`h-8 px-3 text-xs ${showDebugPanel ? 'text-red-400 bg-red-500/10' : 'text-zinc-400'} hover:text-red-400 hover:bg-red-500/10`}
+                    >
+                        <Bug className="w-3.5 h-3.5 mr-1.5" />
+                        Debug
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowImportExport(true)}
+                        className="h-8 px-3 text-xs text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/10"
+                    >
+                        <Download className="w-3.5 h-3.5 mr-1.5" />
+                        Import
+                    </Button>
+                </div>
+
+                {/* Right side actions */}
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowAIAssistant(!showAIAssistant)}
+                        className={`h-8 px-3 text-xs ${showAIAssistant ? 'text-purple-400 bg-purple-500/10' : 'text-zinc-400'} hover:text-purple-400 hover:bg-purple-500/10`}
+                    >
+                        <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                        AI Help
+                    </Button>
+                    <div className="h-5 w-px bg-zinc-800" />
+                    <Button
+                        variant="ghost"
                         size="sm"
                         onClick={handleExecuteClick}
                         disabled={executing || nodes.length === 0}
-                        className="bg-transparent border-[hsl(225_8%_18%)] text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-400"
+                        className="h-8 px-3 text-xs text-emerald-400 hover:text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50"
                     >
                         {executing ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                         ) : (
-                            <Play className="w-4 h-4 mr-2" />
+                            <Play className="w-3.5 h-3.5 mr-1.5" />
                         )}
                         Execute
                     </Button>
@@ -400,20 +549,20 @@ function EditorContent() {
                         onClick={handleSave}
                         disabled={saving}
                         size="sm"
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                        className="h-8 px-4 text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
                     >
-                        {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        <Save className="mr-2 h-4 w-4" />
+                        {saving && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                        <Save className="mr-1.5 h-3.5 w-3.5" />
                         Save
                     </Button>
                 </div>
             </div>
 
             {/* Editor Body */}
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 overflow-hidden min-h-0">
                 <Sidebar />
 
-                <div className="flex-1 h-full" ref={reactFlowWrapper}>
+                <div className="flex-1 h-full min-h-0" ref={reactFlowWrapper}>
                     <ReactFlow
                         nodes={nodes as Node[]}
                         edges={edges}
@@ -425,6 +574,7 @@ function EditorContent() {
                         onDragOver={onDragOver}
                         onSelectionChange={onSelectionChange}
                         nodeTypes={nodeTypes}
+                        edgeTypes={edgeTypes}
                         fitView
                         proOptions={{ hideAttribution: true }}
                         defaultEdgeOptions={{
@@ -496,13 +646,13 @@ function EditorContent() {
 
             {/* Input Dialog */}
             <Dialog open={showInputDialog} onOpenChange={setShowInputDialog}>
-                <DialogContent className="bg-[hsl(225_12%_8%)] border-[hsl(225_8%_18%)] text-[hsl(220_13%_91%)]">
+                <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <MessageSquare className="w-5 h-5 text-indigo-400" />
+                            <Play className="w-5 h-5 text-emerald-400" />
                             Execute Workflow
                         </DialogTitle>
-                        <DialogDescription className="text-[hsl(220_9%_63%)]">
+                        <DialogDescription className="text-zinc-500">
                             Provide input for the workflow. This will be passed to the first agent.
                         </DialogDescription>
                     </DialogHeader>
@@ -539,6 +689,100 @@ function EditorContent() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Import/Export Dialog */}
+            <ImportExportDialog
+                isOpen={showImportExport}
+                onClose={() => setShowImportExport(false)}
+                onImport={(data) => {
+                    setNodes(data.nodes as WorkflowNode[]);
+                    setEdges(data.edges);
+                    if (data.name) setWorkflowName(data.name);
+                    toast.success('Workflow imported successfully');
+                }}
+                currentWorkflow={{
+                    name: workflowName,
+                    version: '1.0.0',
+                    nodes: nodes as any[],
+                    edges: edges as any[],
+                }}
+            />
+
+            {/* Credentials Manager */}
+            <CredentialManager
+                isOpen={showCredentials}
+                onClose={() => setShowCredentials(false)}
+            />
+
+            {/* Webhook Manager */}
+            {workflowId && (
+                <WebhookManager
+                    workflowId={workflowId}
+                    isOpen={showWebhooks}
+                    onClose={() => setShowWebhooks(false)}
+                />
+            )}
+
+            {/* Schedule Manager */}
+            {workflowId && (
+                <ScheduleManager
+                    workflowId={workflowId}
+                    isOpen={showSchedules}
+                    onClose={() => setShowSchedules(false)}
+                />
+            )}
+
+            {/* Debug Panel */}
+            {showDebugPanel && workflowId && (
+                <div className="absolute right-0 top-0 bottom-0 z-50">
+                    <DebugPanel
+                        workflowId={workflowId}
+                        nodes={nodes.map(n => ({ id: n.id, data: n.data as any }))}
+                        isOpen={showDebugPanel}
+                        onClose={() => setShowDebugPanel(false)}
+                        onBreakpointChange={setBreakpoints}
+                        onNodeHighlight={(nodeId) => {
+                            setHighlightedNodeId(nodeId);
+                            if (nodeId) {
+                                const node = nodes.find(n => n.id === nodeId);
+                                if (node && reactFlowInstance) {
+                                    reactFlowInstance.fitView({ 
+                                        nodes: [{ id: nodeId }], 
+                                        padding: 0.5,
+                                        duration: 500
+                                    });
+                                }
+                            }
+                        }}
+                    />
+                </div>
+            )}
+
+            {/* Pin Data Panel */}
+            {showPinPanel && pinPanelNodeId && workflowId && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowPinPanel(false)}>
+                    <div onClick={e => e.stopPropagation()}>
+                        <PinDataPanel
+                            workflowId={workflowId}
+                            nodeId={pinPanelNodeId}
+                            nodeName={nodes.find(n => n.id === pinPanelNodeId)?.data?.label || pinPanelNodeId}
+                            pinnedData={getPinnedData(pinPanelNodeId)}
+                            onPin={(data) => pinData(pinPanelNodeId, data)}
+                            onUnpin={() => unpinData(pinPanelNodeId)}
+                            onClose={() => setShowPinPanel(false)}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* AI Assistant */}
+            {showAIAssistant && (
+                <AIAssistant
+                    onClose={() => setShowAIAssistant(false)}
+                    currentNodes={nodes}
+                    currentEdges={edges}
+                />
+            )}
         </div>
     );
 }

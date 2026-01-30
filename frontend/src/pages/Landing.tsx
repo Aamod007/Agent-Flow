@@ -18,6 +18,8 @@ import {
     Bot,
     FileText,
     Database,
+    BarChart3,
+    Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +62,13 @@ function Spotlight() {
 
 // Navigation component
 function Navbar() {
+    const scrollToSection = (id: string) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
     return (
         <nav className="relative z-50 flex items-center justify-between px-8 lg:px-16 py-5">
             <div className="flex items-center gap-2.5">
@@ -70,43 +79,71 @@ function Navbar() {
             </div>
 
             <div className="hidden lg:flex items-center gap-8">
-                <a href="#features" className="text-sm text-zinc-400 hover:text-white transition-colors relative group">
-                    Products
+                <button 
+                    onClick={() => scrollToSection('features')} 
+                    className="text-sm text-zinc-400 hover:text-white transition-colors relative group"
+                >
+                    Features
                     <span className="absolute -bottom-1 left-0 w-0 h-px bg-indigo-500 group-hover:w-full transition-all duration-300" />
-                </a>
-                <a href="#pricing" className="text-sm text-zinc-400 hover:text-white transition-colors relative group">
+                </button>
+                <button 
+                    onClick={() => scrollToSection('pricing')} 
+                    className="text-sm text-zinc-400 hover:text-white transition-colors relative group"
+                >
                     Pricing
                     <span className="absolute -bottom-1 left-0 w-0 h-px bg-indigo-500 group-hover:w-full transition-all duration-300" />
-                </a>
-                <a href="#clients" className="text-sm text-zinc-400 hover:text-white transition-colors relative group">
-                    Clients
+                </button>
+                <button 
+                    onClick={() => scrollToSection('clients')} 
+                    className="text-sm text-zinc-400 hover:text-white transition-colors relative group"
+                >
+                    Showcase
                     <span className="absolute -bottom-1 left-0 w-0 h-px bg-indigo-500 group-hover:w-full transition-all duration-300" />
-                </a>
-                <a href="#resources" className="text-sm text-zinc-400 hover:text-white transition-colors relative group">
+                </button>
+                <button 
+                    onClick={() => scrollToSection('resources')} 
+                    className="text-sm text-zinc-400 hover:text-white transition-colors relative group"
+                >
                     Resources
                     <span className="absolute -bottom-1 left-0 w-0 h-px bg-indigo-500 group-hover:w-full transition-all duration-300" />
-                </a>
-                <a href="#documentation" className="text-sm text-zinc-400 hover:text-white transition-colors relative group">
-                    Documentation
+                </button>
+                <button 
+                    onClick={() => scrollToSection('documentation')} 
+                    className="text-sm text-zinc-400 hover:text-white transition-colors relative group"
+                >
+                    Docs
                     <span className="absolute -bottom-1 left-0 w-0 h-px bg-indigo-500 group-hover:w-full transition-all duration-300" />
-                </a>
-                <a href="#enterprise" className="text-sm text-zinc-400 hover:text-white transition-colors relative group">
+                </button>
+                <button 
+                    onClick={() => scrollToSection('enterprise')} 
+                    className="text-sm text-zinc-400 hover:text-white transition-colors relative group"
+                >
                     Enterprise
                     <span className="absolute -bottom-1 left-0 w-0 h-px bg-indigo-500 group-hover:w-full transition-all duration-300" />
-                </a>
+                </button>
             </div>
 
             <div className="flex items-center gap-4">
                 <Button
                     asChild
+                    variant="ghost"
                     size="sm"
-                    className="h-10 px-5 text-sm bg-indigo-600 hover:bg-indigo-700 rounded-full shadow-lg shadow-indigo-600/25 hover:shadow-indigo-600/40 transition-all duration-300"
+                    className="h-10 px-4 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800/50"
                 >
-                    <Link to="/dashboard">
-                        Dashboard
+                    <Link to="/dashboard/settings">
+                        Sign In
                     </Link>
                 </Button>
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 ring-2 ring-white/10 shadow-lg shadow-cyan-500/20" />
+                <Button
+                    asChild
+                    size="sm"
+                    className="h-10 px-5 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-full shadow-lg shadow-indigo-600/25 hover:shadow-indigo-600/40 transition-all duration-300"
+                >
+                    <Link to="/dashboard">
+                        Get Started
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                    </Link>
+                </Button>
             </div>
         </nav>
     );
@@ -116,30 +153,40 @@ function Navbar() {
 function PricingCard({
     title,
     price,
+    period = "/month",
     description,
     features,
-    highlighted = false
+    highlighted = false,
+    ctaText = "Get Started"
 }: {
     title: string;
     price: string;
+    period?: string;
     description: string;
     features: string[];
     highlighted?: boolean;
+    ctaText?: string;
 }) {
     return (
         <div className={cn(
             "relative flex flex-col p-8 rounded-2xl border transition-all duration-300 backdrop-blur-sm",
             highlighted 
-                ? "bg-zinc-900/90 border-indigo-500/50 shadow-2xl shadow-indigo-500/20 ring-1 ring-indigo-500/20" 
-                : "bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 hover:shadow-xl hover:shadow-zinc-950/50"
+                ? "bg-gradient-to-b from-indigo-950/50 to-zinc-900/90 border-indigo-500/50 shadow-2xl shadow-indigo-500/20 ring-1 ring-indigo-500/20 scale-105" 
+                : "bg-zinc-900/60 border-zinc-800 hover:border-indigo-500/30 hover:shadow-xl hover:shadow-indigo-950/30"
         )}>
             {highlighted && (
-                <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-indigo-500/20 via-transparent to-transparent pointer-events-none" />
+                <>
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-xs font-medium text-white shadow-lg">
+                        Most Popular
+                    </div>
+                    <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-indigo-500/20 via-transparent to-transparent pointer-events-none" />
+                </>
             )}
             <div className="mb-6 relative">
                 <h3 className="text-base font-medium text-zinc-300">{title}</h3>
-                <div className="mt-3">
+                <div className="mt-3 flex items-baseline gap-1">
                     <span className="text-4xl font-bold text-white">{price}</span>
+                    {price !== "Custom" && <span className="text-sm text-zinc-500">{period}</span>}
                 </div>
                 <p className="mt-3 text-sm text-zinc-500 leading-relaxed">{description}</p>
             </div>
@@ -147,28 +194,31 @@ function PricingCard({
             <ul className="flex-1 space-y-3 mb-8">
                 {features.map((feature, i) => (
                     <li key={i} className="flex items-center gap-3">
-                        <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <div className={cn(
+                            "w-5 h-5 rounded-full flex items-center justify-center",
+                            highlighted ? "bg-indigo-500/20" : "bg-zinc-800"
+                        )}>
+                            <Check className={cn("w-3 h-3", highlighted ? "text-indigo-400" : "text-emerald-400")} />
+                        </div>
                         <span className="text-sm text-zinc-400">{feature}</span>
                     </li>
                 ))}
             </ul>
 
-            <div className="flex items-center gap-4">
-                <button className="text-sm text-zinc-400 hover:text-white transition-colors">
-                    Try now →
-                </button>
-                <Button
-                    size="sm"
-                    className={cn(
-                        "flex-1 h-10 text-sm rounded-lg",
-                        highlighted
-                            ? "bg-white text-black hover:bg-zinc-200"
-                            : "bg-zinc-800 text-white hover:bg-zinc-700"
-                    )}
-                >
-                    Get Started Now
-                </Button>
-            </div>
+            <Button
+                asChild
+                className={cn(
+                    "w-full h-11 text-sm rounded-lg transition-all duration-300",
+                    highlighted
+                        ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/25"
+                        : "bg-zinc-800 text-white hover:bg-zinc-700 border border-zinc-700"
+                )}
+            >
+                <Link to="/dashboard">
+                    {ctaText}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+            </Button>
         </div>
     );
 }
@@ -355,6 +405,45 @@ function ProductShowcase() {
 
 // Client logos/showcase section
 function ClientShowcase() {
+    const showcaseItems = [
+        { 
+            title: "Workflow Editor", 
+            description: "Visual drag-and-drop builder for creating complex automation flows", 
+            icon: GitBranch,
+            featured: true 
+        },
+        { 
+            title: "AI Agents", 
+            description: "GPT-4, Claude & more", 
+            icon: Bot,
+            featured: false 
+        },
+        { 
+            title: "Analytics", 
+            description: "Real-time insights", 
+            icon: BarChart3,
+            featured: false 
+        },
+        { 
+            title: "Templates", 
+            description: "100+ pre-built workflows ready to deploy instantly", 
+            icon: Layers,
+            featured: true 
+        },
+        { 
+            title: "Connections", 
+            description: "500+ integrations", 
+            icon: Webhook,
+            featured: false 
+        },
+        { 
+            title: "Executions", 
+            description: "Live monitoring", 
+            icon: Zap,
+            featured: false 
+        },
+    ];
+
     return (
         <section id="clients" className="relative z-10 py-24 px-8">
             {/* Background depth effects */}
@@ -364,45 +453,101 @@ function ClientShowcase() {
             
             <div className="max-w-6xl mx-auto relative">
                 <div className="text-center mb-16">
-                    <p className="text-sm text-indigo-400/80 uppercase tracking-wider mb-3 font-medium">Trusted by innovative teams</p>
-                    <h2 className="text-3xl font-bold text-white">
-                        We are a <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">development studio</span>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
+                        <Sparkles className="w-4 h-4 text-indigo-400" />
+                        <span className="text-sm text-indigo-400">Product Showcase</span>
+                    </div>
+                    <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                        <span className="text-white">Built for </span>
+                        <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Modern Teams</span>
                     </h2>
                     <p className="text-sm text-zinc-500 mt-3 max-w-lg mx-auto">
-                        We build beautiful products with the latest technologies and frameworks. 
-                        We are a team of passionate developers and designers.
+                        A complete platform for building, deploying, and managing AI-powered automation workflows.
                     </p>
                 </div>
 
-                {/* Bento grid of product screenshots */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[...Array(8)].map((_, i) => (
-                        <div 
-                            key={i}
-                            className={cn(
-                                "rounded-xl border border-zinc-800/50 bg-zinc-900/50 overflow-hidden backdrop-blur-sm",
-                                "hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300",
-                                "hover:shadow-xl hover:shadow-black/30 hover:-translate-y-1",
-                                "ring-1 ring-white/5",
-                                i === 0 || i === 3 ? "row-span-2" : ""
-                            )}
-                        >
-                            <div className={cn(
-                                "w-full bg-gradient-to-br from-zinc-800/50 to-zinc-900/50",
-                                i === 0 || i === 3 ? "h-56" : "h-28"
-                            )}>
-                                {/* Placeholder for product screenshots */}
-                                <div className="w-full h-full flex items-center justify-center text-zinc-700 relative overflow-hidden">
-                                    {/* Shimmer effect */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000" />
-                                    <div className="text-center relative z-10">
-                                        <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-zinc-800 shadow-inner" />
-                                        <p className="text-xs">Dashboard</p>
+                {/* Bento grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {showcaseItems.map((item, i) => {
+                        const Icon = item.icon;
+                        return (
+                            <Link 
+                                key={i}
+                                to="/dashboard"
+                                className={cn(
+                                    "group relative rounded-2xl border border-zinc-800/50 bg-zinc-900/50 overflow-hidden backdrop-blur-sm",
+                                    "hover:border-indigo-500/40 transition-all duration-500",
+                                    "hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1",
+                                    item.featured ? "md:col-span-1 md:row-span-2" : ""
+                                )}
+                            >
+                                {/* Gradient overlay */}
+                                <div className={cn(
+                                    "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+                                    i % 2 === 0 
+                                        ? "bg-gradient-to-br from-indigo-500/10 via-transparent to-purple-500/5" 
+                                        : "bg-gradient-to-br from-purple-500/10 via-transparent to-indigo-500/5"
+                                )} />
+                                
+                                {/* Shine effect */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+                                
+                                {/* Content */}
+                                <div className={cn(
+                                    "relative p-6 flex flex-col",
+                                    item.featured ? "h-full min-h-[280px] justify-between" : "h-[140px]"
+                                )}>
+                                    {/* Icon */}
+                                    <div className={cn(
+                                        "rounded-xl flex items-center justify-center transition-all duration-300",
+                                        "bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/20",
+                                        "group-hover:border-indigo-500/40 group-hover:shadow-lg group-hover:shadow-indigo-500/20",
+                                        item.featured ? "w-14 h-14 mb-6" : "w-12 h-12 mb-4"
+                                    )}>
+                                        <Icon className={cn(
+                                            "text-indigo-400 group-hover:text-indigo-300 transition-colors",
+                                            item.featured ? "w-7 h-7" : "w-5 h-5"
+                                        )} />
+                                    </div>
+                                    
+                                    {/* Text */}
+                                    <div className={item.featured ? "mt-auto" : ""}>
+                                        <h3 className={cn(
+                                            "font-semibold text-white mb-2 group-hover:text-indigo-100 transition-colors",
+                                            item.featured ? "text-xl" : "text-base"
+                                        )}>
+                                            {item.title}
+                                        </h3>
+                                        <p className={cn(
+                                            "text-zinc-500 group-hover:text-zinc-400 transition-colors",
+                                            item.featured ? "text-sm leading-relaxed" : "text-xs"
+                                        )}>
+                                            {item.description}
+                                        </p>
+                                    </div>
+                                    
+                                    {/* Arrow indicator */}
+                                    <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                        <ArrowRight className="w-5 h-5 text-indigo-400" />
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    ))}
+                            </Link>
+                        );
+                    })}
+                </div>
+                
+                {/* CTA */}
+                <div className="mt-12 text-center">
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="h-11 px-6 rounded-full border-zinc-700 text-zinc-300 hover:bg-indigo-500/10 hover:border-indigo-500/30 hover:text-white transition-all duration-300"
+                    >
+                        <Link to="/dashboard">
+                            Explore All Features
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                        </Link>
+                    </Button>
                 </div>
             </div>
         </section>
@@ -484,6 +629,118 @@ export default function Landing() {
             {/* Product showcase */}
             <ProductShowcase />
 
+            {/* Features Section */}
+            <section id="features" className="relative z-10 py-24 px-8">
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/5 blur-[150px] rounded-full" />
+                    <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-purple-500/5 blur-[120px] rounded-full" />
+                </div>
+                
+                <div className="max-w-6xl mx-auto relative">
+                    <div className="text-center mb-16">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
+                            <Sparkles className="w-4 h-4 text-indigo-400" />
+                            <span className="text-sm text-indigo-400">Powerful Features</span>
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                            <span className="text-white">Everything You Need</span>
+                            <br />
+                            <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">To Automate Workflows</span>
+                        </h2>
+                        <p className="text-zinc-500 max-w-xl mx-auto">
+                            Build sophisticated AI workflows with our intuitive visual editor and powerful integrations.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {/* Feature 1 */}
+                        <div className="group relative p-6 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-indigo-500/30 transition-all duration-300 backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                            <div className="relative">
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20">
+                                    <GitBranch className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-white mb-2">Visual Workflow Builder</h3>
+                                <p className="text-sm text-zinc-500">Drag-and-drop interface to build complex automation flows without writing code.</p>
+                            </div>
+                        </div>
+
+                        {/* Feature 2 */}
+                        <div className="group relative p-6 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-purple-500/30 transition-all duration-300 backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                            <div className="relative">
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20">
+                                    <Bot className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-white mb-2">AI-Powered Agents</h3>
+                                <p className="text-sm text-zinc-500">Connect to GPT-4, Claude, Gemini and more to power intelligent automation.</p>
+                            </div>
+                        </div>
+
+                        {/* Feature 3 */}
+                        <div className="group relative p-6 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-indigo-500/30 transition-all duration-300 backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                            <div className="relative">
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20">
+                                    <Webhook className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-white mb-2">500+ Integrations</h3>
+                                <p className="text-sm text-zinc-500">Connect with Slack, Discord, Notion, Google Workspace, and hundreds more.</p>
+                            </div>
+                        </div>
+
+                        {/* Feature 4 */}
+                        <div className="group relative p-6 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-purple-500/30 transition-all duration-300 backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                            <div className="relative">
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20">
+                                    <Calendar className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-white mb-2">Scheduled Triggers</h3>
+                                <p className="text-sm text-zinc-500">Run workflows on a schedule with cron expressions or webhook triggers.</p>
+                            </div>
+                        </div>
+
+                        {/* Feature 5 */}
+                        <div className="group relative p-6 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-indigo-500/30 transition-all duration-300 backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                            <div className="relative">
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20">
+                                    <Database className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-white mb-2">Data Transformation</h3>
+                                <p className="text-sm text-zinc-500">Transform and map data between services with powerful expression engine.</p>
+                            </div>
+                        </div>
+
+                        {/* Feature 6 */}
+                        <div className="group relative p-6 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-purple-500/30 transition-all duration-300 backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                            <div className="relative">
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20">
+                                    <Zap className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-white mb-2">Real-Time Execution</h3>
+                                <p className="text-sm text-zinc-500">Watch your workflows execute in real-time with detailed logs and debugging.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CTA */}
+                    <div className="mt-12 text-center">
+                        <Button
+                            asChild
+                            className="h-12 px-8 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-full shadow-xl shadow-indigo-500/25"
+                        >
+                            <Link to="/dashboard/workflows">
+                                Explore All Features
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+            </section>
+
             {/* Pricing Section */}
             <section id="pricing" className="relative z-10 py-28 px-8">
                 <div className="max-w-5xl mx-auto">
@@ -506,35 +763,47 @@ export default function Landing() {
 
                     <div className="grid md:grid-cols-3 gap-5 relative">
                         <PricingCard
-                            title="Hobby"
+                            title="Starter"
                             price="$0"
-                            description="Get a glimpse of what our software is capable of. Just a heads up you'll never leave us after this!"
+                            description="Perfect for getting started with AI workflow automation."
                             features={[
-                                "3 Free automations",
-                                "100 tasks per month",
-                                "Two-step Actions"
+                                "5 Active workflows",
+                                "1,000 executions/month",
+                                "Basic AI models",
+                                "Community support",
+                                "7-day execution logs"
                             ]}
+                            ctaText="Start Free"
                         />
                         <PricingCard
-                            title="Pro Plan"
+                            title="Pro"
                             price="$29"
-                            description="Get a glimpse of what our software is capable of. Just a heads up you'll never leave us after this!"
+                            description="For teams that need more power and advanced features."
                             features={[
-                                "3 Free automations",
-                                "100 tasks per month",
-                                "Two-step Actions"
+                                "Unlimited workflows",
+                                "50,000 executions/month",
+                                "All AI models (GPT-4, Claude)",
+                                "Priority support",
+                                "30-day execution logs",
+                                "Webhooks & API access"
                             ]}
                             highlighted
+                            ctaText="Start Pro Trial"
                         />
                         <PricingCard
-                            title="Unlimited"
-                            price="$99"
-                            description="Get a glimpse of what our software is capable of. Just a heads up you'll never leave us after this!"
+                            title="Enterprise"
+                            price="Custom"
+                            period=""
+                            description="Custom solutions for large-scale automation needs."
                             features={[
-                                "3 Free automations",
-                                "100 tasks per month",
-                                "Two-step Actions"
+                                "Unlimited everything",
+                                "Custom AI models",
+                                "Dedicated support",
+                                "SLA guarantee",
+                                "SSO & SAML",
+                                "On-premise deployment"
                             ]}
+                            ctaText="Contact Sales"
                         />
                     </div>
                 </div>
@@ -547,12 +816,12 @@ export default function Landing() {
             <section id="resources" className="relative z-10 py-24 px-8">
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-16">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
-                            <FileText className="w-4 h-4 text-emerald-400" />
-                            <span className="text-sm text-emerald-400">Resources</span>
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
+                            <FileText className="w-4 h-4 text-indigo-400" />
+                            <span className="text-sm text-indigo-400">Resources</span>
                         </div>
                         <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                            <span className="text-white">Learn & Grow</span>
+                            <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Learn & Grow</span>
                         </h2>
                         <p className="text-zinc-500 max-w-xl mx-auto">
                             Explore our guides, tutorials, and best practices to master AI workflow automation.
@@ -561,94 +830,94 @@ export default function Landing() {
 
                     <div className="grid md:grid-cols-3 gap-6">
                         {/* Resource Card 1 */}
-                        <div className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
+                        <Link to="/dashboard" className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-indigo-500/30 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                             <div className="relative">
-                                <div className="w-12 h-12 rounded-lg bg-indigo-500/10 flex items-center justify-center mb-4">
-                                    <Sparkles className="w-6 h-6 text-indigo-400" />
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20">
+                                    <Sparkles className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-white mb-2">Getting Started Guide</h3>
                                 <p className="text-sm text-zinc-500 mb-4">Learn the basics of creating your first AI workflow in under 10 minutes.</p>
-                                <a href="#" className="inline-flex items-center text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+                                <span className="inline-flex items-center text-sm text-indigo-400 group-hover:text-indigo-300 transition-colors">
                                     Read Guide <ArrowRight className="w-4 h-4 ml-1" />
-                                </a>
+                                </span>
                             </div>
-                        </div>
+                        </Link>
 
                         {/* Resource Card 2 */}
-                        <div className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
+                        <Link to="/dashboard/templates" className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-purple-500/30 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                             <div className="relative">
-                                <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4">
-                                    <Bot className="w-6 h-6 text-purple-400" />
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20">
+                                    <Bot className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-white mb-2">AI Agent Templates</h3>
                                 <p className="text-sm text-zinc-500 mb-4">Pre-built agent configurations for common automation scenarios.</p>
-                                <a href="#" className="inline-flex items-center text-sm text-purple-400 hover:text-purple-300 transition-colors">
+                                <span className="inline-flex items-center text-sm text-purple-400 group-hover:text-purple-300 transition-colors">
                                     Browse Templates <ArrowRight className="w-4 h-4 ml-1" />
-                                </a>
+                                </span>
                             </div>
-                        </div>
+                        </Link>
 
                         {/* Resource Card 3 */}
-                        <div className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
-                            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                        <Link to="/dashboard/connections" className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-indigo-500/30 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                             <div className="relative">
-                                <div className="w-12 h-12 rounded-lg bg-cyan-500/10 flex items-center justify-center mb-4">
-                                    <Webhook className="w-6 h-6 text-cyan-400" />
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20">
+                                    <Webhook className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-white mb-2">Integration Guides</h3>
                                 <p className="text-sm text-zinc-500 mb-4">Connect AgentFlow to your favorite tools and services.</p>
-                                <a href="#" className="inline-flex items-center text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
+                                <span className="inline-flex items-center text-sm text-indigo-400 group-hover:text-indigo-300 transition-colors">
                                     View Integrations <ArrowRight className="w-4 h-4 ml-1" />
-                                </a>
+                                </span>
                             </div>
-                        </div>
+                        </Link>
 
                         {/* Resource Card 4 */}
-                        <div className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
-                            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                        <a href="https://github.com/Aamod007/Agent-Flow/discussions" target="_blank" rel="noopener noreferrer" className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-purple-500/30 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                             <div className="relative">
-                                <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center mb-4">
-                                    <MessageSquare className="w-6 h-6 text-orange-400" />
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20">
+                                    <MessageSquare className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-white mb-2">Community Forum</h3>
                                 <p className="text-sm text-zinc-500 mb-4">Connect with other users, share workflows, and get help.</p>
-                                <a href="#" className="inline-flex items-center text-sm text-orange-400 hover:text-orange-300 transition-colors">
+                                <span className="inline-flex items-center text-sm text-purple-400 group-hover:text-purple-300 transition-colors">
                                     Join Community <ArrowRight className="w-4 h-4 ml-1" />
-                                </a>
+                                </span>
                             </div>
-                        </div>
+                        </a>
 
                         {/* Resource Card 5 */}
-                        <div className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
-                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                        <Link to="/dashboard/analytics" className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-indigo-500/30 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                             <div className="relative">
-                                <div className="w-12 h-12 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-4">
-                                    <Calendar className="w-6 h-6 text-emerald-400" />
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20">
+                                    <Calendar className="w-6 h-6 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-white mb-2">Webinars & Events</h3>
-                                <p className="text-sm text-zinc-500 mb-4">Live demos, Q&A sessions, and workflow building workshops.</p>
-                                <a href="#" className="inline-flex items-center text-sm text-emerald-400 hover:text-emerald-300 transition-colors">
-                                    View Schedule <ArrowRight className="w-4 h-4 ml-1" />
-                                </a>
+                                <h3 className="text-lg font-semibold text-white mb-2">Analytics & Reports</h3>
+                                <p className="text-sm text-zinc-500 mb-4">Track workflow performance with detailed analytics and insights.</p>
+                                <span className="inline-flex items-center text-sm text-indigo-400 group-hover:text-indigo-300 transition-colors">
+                                    View Analytics <ArrowRight className="w-4 h-4 ml-1" />
+                                </span>
                             </div>
-                        </div>
+                        </Link>
 
                         {/* Resource Card 6 */}
-                        <div className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
-                            <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                        <a href="https://github.com/Aamod007/Agent-Flow" target="_blank" rel="noopener noreferrer" className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 hover:border-purple-500/30 hover:bg-zinc-900/80 transition-all duration-300 backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                             <div className="relative">
-                                <div className="w-12 h-12 rounded-lg bg-pink-500/10 flex items-center justify-center mb-4">
-                                    <Github className="w-6 h-6 text-pink-400" />
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20">
+                                    <Github className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-white mb-2">Open Source</h3>
                                 <p className="text-sm text-zinc-500 mb-4">Contribute to AgentFlow and build custom extensions.</p>
-                                <a href="https://github.com/Aamod007/Agent-Flow" target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm text-pink-400 hover:text-pink-300 transition-colors">
+                                <span className="inline-flex items-center text-sm text-purple-400 group-hover:text-purple-300 transition-colors">
                                     View on GitHub <ArrowRight className="w-4 h-4 ml-1" />
-                                </a>
+                                </span>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </section>
@@ -659,14 +928,14 @@ export default function Landing() {
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         {/* Left - Info */}
                         <div>
-                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 mb-6">
-                                <Database className="w-4 h-4 text-blue-400" />
-                                <span className="text-sm text-blue-400">Documentation</span>
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
+                                <Database className="w-4 h-4 text-indigo-400" />
+                                <span className="text-sm text-indigo-400">Documentation</span>
                             </div>
                             <h2 className="text-4xl md:text-5xl font-bold mb-6">
                                 <span className="text-white">Comprehensive</span>
                                 <br />
-                                <span className="text-zinc-400">API Documentation</span>
+                                <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">API Documentation</span>
                             </h2>
                             <p className="text-zinc-500 mb-8 leading-relaxed">
                                 Everything you need to integrate AgentFlow into your applications. 
@@ -675,19 +944,19 @@ export default function Landing() {
                             
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
-                                    <Check className="w-5 h-5 text-emerald-400" />
+                                    <Check className="w-5 h-5 text-indigo-400" />
                                     <span className="text-zinc-300">RESTful API with OpenAPI spec</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <Check className="w-5 h-5 text-emerald-400" />
+                                    <Check className="w-5 h-5 text-indigo-400" />
                                     <span className="text-zinc-300">WebSocket support for real-time updates</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <Check className="w-5 h-5 text-emerald-400" />
+                                    <Check className="w-5 h-5 text-indigo-400" />
                                     <span className="text-zinc-300">SDKs for JavaScript, Python, and Go</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <Check className="w-5 h-5 text-emerald-400" />
+                                    <Check className="w-5 h-5 text-indigo-400" />
                                     <span className="text-zinc-300">Interactive API playground</span>
                                 </div>
                             </div>
@@ -695,7 +964,7 @@ export default function Landing() {
                             <div className="flex items-center gap-4 mt-8">
                                 <Button
                                     asChild
-                                    className="h-11 px-6 bg-blue-600 hover:bg-blue-500 rounded-lg shadow-lg shadow-blue-600/20"
+                                    className="h-11 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-lg shadow-lg shadow-indigo-600/20"
                                 >
                                     <a href="#" target="_blank" rel="noopener noreferrer">
                                         View Documentation
@@ -716,7 +985,7 @@ export default function Landing() {
 
                         {/* Right - Code Preview */}
                         <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-transparent blur-[60px] -z-10" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent blur-[60px] -z-10" />
                             <div className="rounded-xl border border-zinc-800 bg-zinc-900/90 overflow-hidden shadow-2xl shadow-black/50">
                                 {/* Code header */}
                                 <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-zinc-900">
@@ -758,41 +1027,41 @@ export default function Landing() {
             {/* Enterprise Section */}
             <section id="enterprise" className="relative z-10 py-24 px-8 border-t border-zinc-800/50">
                 <div className="max-w-4xl mx-auto text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 mb-6">
-                        <Zap className="w-4 h-4 text-amber-400" />
-                        <span className="text-sm text-amber-400">Enterprise</span>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
+                        <Zap className="w-4 h-4 text-indigo-400" />
+                        <span className="text-sm text-indigo-400">Enterprise</span>
                     </div>
                     <h2 className="text-4xl md:text-5xl font-bold mb-6">
                         <span className="text-white">Scale With</span>
                         <br />
-                        <span className="text-zinc-400">Enterprise Features</span>
+                        <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Enterprise Features</span>
                     </h2>
                     <p className="text-zinc-500 max-w-2xl mx-auto mb-10">
                         Advanced security, dedicated support, and custom integrations for teams that need more.
                     </p>
 
                     <div className="grid md:grid-cols-4 gap-4 mb-10">
-                        <div className="p-4 rounded-lg bg-zinc-900/50 border border-zinc-800">
-                            <p className="text-2xl font-bold text-white">99.9%</p>
+                        <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 hover:border-indigo-500/30 transition-colors">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">99.9%</p>
                             <p className="text-sm text-zinc-500">Uptime SLA</p>
                         </div>
-                        <div className="p-4 rounded-lg bg-zinc-900/50 border border-zinc-800">
-                            <p className="text-2xl font-bold text-white">SOC 2</p>
+                        <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 hover:border-indigo-500/30 transition-colors">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">SOC 2</p>
                             <p className="text-sm text-zinc-500">Compliant</p>
                         </div>
-                        <div className="p-4 rounded-lg bg-zinc-900/50 border border-zinc-800">
-                            <p className="text-2xl font-bold text-white">24/7</p>
+                        <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 hover:border-indigo-500/30 transition-colors">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">24/7</p>
                             <p className="text-sm text-zinc-500">Support</p>
                         </div>
-                        <div className="p-4 rounded-lg bg-zinc-900/50 border border-zinc-800">
-                            <p className="text-2xl font-bold text-white">SSO</p>
+                        <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 hover:border-indigo-500/30 transition-colors">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">SSO</p>
                             <p className="text-sm text-zinc-500">Authentication</p>
                         </div>
                     </div>
 
                     <Button
                         asChild
-                        className="h-12 px-8 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 rounded-full shadow-xl shadow-amber-500/20"
+                        className="h-12 px-8 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-full shadow-xl shadow-indigo-500/20"
                     >
                         <a href="mailto:enterprise@agentflow.ai">
                             <Mail className="w-4 h-4 mr-2" />
@@ -809,19 +1078,19 @@ export default function Landing() {
                 
                 <div className="max-w-6xl mx-auto relative">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div className="flex items-center gap-2.5">
+                        <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
                             <div className="h-9 w-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 ring-1 ring-white/10">
                                 <Zap className="h-4 w-4 text-white" />
                             </div>
                             <span className="font-semibold text-base">AgentFlow</span>
-                        </div>
+                        </Link>
 
                         <div className="flex items-center gap-6 text-sm text-zinc-500">
-                            <a href="#features" className="hover:text-white transition-colors">Products</a>
-                            <a href="#resources" className="hover:text-white transition-colors">Resources</a>
-                            <a href="#documentation" className="hover:text-white transition-colors">Documentation</a>
-                            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-                            <a href="#" className="hover:text-white transition-colors">Terms</a>
+                            <Link to="/dashboard/workflows" className="hover:text-white transition-colors">Workflows</Link>
+                            <Link to="/dashboard/templates" className="hover:text-white transition-colors">Templates</Link>
+                            <Link to="/dashboard/connections" className="hover:text-white transition-colors">Connections</Link>
+                            <Link to="/dashboard/analytics" className="hover:text-white transition-colors">Analytics</Link>
+                            <Link to="/dashboard/settings" className="hover:text-white transition-colors">Settings</Link>
                         </div>
 
                         <div className="flex items-center gap-4">
@@ -837,8 +1106,15 @@ export default function Landing() {
                         </div>
                     </div>
 
-                    <div className="mt-8 pt-8 border-t border-zinc-800/50 text-center text-sm text-zinc-600">
-                        © 2026 AgentFlow. All rights reserved.
+                    <div className="mt-8 pt-8 border-t border-zinc-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <p className="text-sm text-zinc-600">
+                            © 2026 AgentFlow. All rights reserved.
+                        </p>
+                        <div className="flex items-center gap-6 text-xs text-zinc-600">
+                            <a href="#" className="hover:text-zinc-400 transition-colors">Privacy Policy</a>
+                            <a href="#" className="hover:text-zinc-400 transition-colors">Terms of Service</a>
+                            <a href="#" className="hover:text-zinc-400 transition-colors">Cookie Policy</a>
+                        </div>
                     </div>
                 </div>
             </footer>

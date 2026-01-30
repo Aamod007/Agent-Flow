@@ -51,7 +51,13 @@ export function useWorkflow(workflowId: string | undefined, options: UseWorkflow
         if (!workflowId) throw new Error('No workflow ID');
 
         try {
-            const updated = await api.saveWorkflow(workflowId, data);
+            const saveData: { definition?: object; name?: string; description?: string; status?: string } = {
+                ...(data.name !== undefined && { name: data.name }),
+                ...(data.description !== undefined && { description: data.description }),
+                ...(data.status !== undefined && { status: data.status }),
+                ...(data.definition !== undefined && { definition: typeof data.definition === 'string' ? JSON.parse(data.definition) : data.definition }),
+            };
+            const updated = await api.saveWorkflow(workflowId, saveData);
             if (isMounted.current) {
                 setWorkflow(updated);
             }

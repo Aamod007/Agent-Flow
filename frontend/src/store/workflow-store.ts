@@ -85,7 +85,7 @@ const initialState = {
 export const useWorkflowStore = create<WorkflowState>((set) => ({
     ...initialState,
 
-    setCurrentWorkflow: (workflow) => set((state) => ({
+    setCurrentWorkflow: (workflow) => set(() => ({
         currentWorkflow: workflow,
         nodes: workflow?.nodes || [],
         edges: workflow?.edges || [],

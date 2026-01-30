@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { api, type Execution, type ExecutionResult } from '@/lib/api';
@@ -15,7 +15,16 @@ import {
     ChevronDown,
     ChevronRight,
     FileText,
-    History
+    History,
+    Terminal,
+    Zap,
+    Maximize2,
+    Minimize2,
+    Copy,
+    Check,
+    Timer,
+    Cpu,
+    Sparkles,
 } from 'lucide-react';
 
 interface ExecutionLog {
@@ -56,6 +65,25 @@ export default function ExecutionMonitor({
     const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
     const [executionHistory, setExecutionHistory] = useState<ExecutionHistory[]>([]);
     const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [copiedId, setCopiedId] = useState<string | null>(null);
+    const logsEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        if (activeTab === 'logs' && logs.length > 0) {
+            scrollToBottom();
+        }
+    }, [logs, activeTab]);
+
+    const copyToClipboard = (text: string, id: string) => {
+        navigator.clipboard.writeText(text);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
 
     const toggleResultExpanded = (agentId: string) => {
         setExpandedResults(prev => {
@@ -93,11 +121,9 @@ export default function ExecutionMonitor({
             };
             
             setExecutionHistory(prev => {
-                // Don't add duplicates
                 if (prev.some(h => h.executionId === execution.id)) {
                     return prev;
                 }
-                // Keep only last 10 executions
                 const newHistory = [historyEntry, ...prev].slice(0, 10);
                 return newHistory;
             });
@@ -122,15 +148,12 @@ export default function ExecutionMonitor({
                     }
                 }
 
-                // Parse results
                 if (exec.result) {
                     try {
                         const parsedResults = JSON.parse(exec.result);
                         setResults(Array.isArray(parsedResults) ? parsedResults : []);
-                        // Auto-switch to results tab when execution completes successfully
                         if (exec.status === 'completed' && parsedResults.length > 0) {
                             setActiveTab('results');
-                            // Auto-expand all results
                             setExpandedResults(new Set(parsedResults.map((r: ExecutionResult) => r.agentId)));
                         }
                     } catch {
@@ -138,7 +161,6 @@ export default function ExecutionMonitor({
                     }
                 }
 
-                // Stop polling if execution is complete
                 if (exec.status === 'completed' || exec.status === 'failed') {
                     setIsPolling(false);
                 }
@@ -156,31 +178,45 @@ export default function ExecutionMonitor({
         }
     }, [executionId, execution?.status]);
 
-    const getStatusIcon = (status: string) => {
+    const getStatusConfig = (status: string) => {
         switch (status) {
             case 'running':
             case 'pending':
-                return <Activity className="w-4 h-4 text-purple-400 animate-pulse" />;
+                return {
+                    icon: Activity,
+                    color: 'text-purple-400',
+                    bg: 'bg-purple-500/10',
+                    border: 'border-purple-500/30',
+                    label: status === 'running' ? 'Running' : 'Pending',
+                    animate: true,
+                };
             case 'completed':
-                return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
+                return {
+                    icon: CheckCircle2,
+                    color: 'text-emerald-400',
+                    bg: 'bg-emerald-500/10',
+                    border: 'border-emerald-500/30',
+                    label: 'Completed',
+                    animate: false,
+                };
             case 'failed':
-                return <XCircle className="w-4 h-4 text-red-400" />;
+                return {
+                    icon: XCircle,
+                    color: 'text-red-400',
+                    bg: 'bg-red-500/10',
+                    border: 'border-red-500/30',
+                    label: 'Failed',
+                    animate: false,
+                };
             default:
-                return <Clock className="w-4 h-4 text-[hsl(220_9%_63%)]" />;
-        }
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'running':
-            case 'pending':
-                return 'bg-purple-500/15 text-purple-400 border-purple-500/30';
-            case 'completed':
-                return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
-            case 'failed':
-                return 'bg-red-500/15 text-red-400 border-red-500/30';
-            default:
-                return 'bg-[hsl(225_8%_18%)] text-[hsl(220_9%_63%)] border-[hsl(225_7%_26%)]';
+                return {
+                    icon: Clock,
+                    color: 'text-muted-foreground',
+                    bg: 'bg-muted/50',
+                    border: 'border-border',
+                    label: 'Unknown',
+                    animate: false,
+                };
         }
     };
 
@@ -193,107 +229,141 @@ export default function ExecutionMonitor({
         });
     };
 
+    const formatDuration = (start: string, end?: string | null) => {
+        const startDate = new Date(start);
+        const endDate = end ? new Date(end) : new Date();
+        const diffMs = endDate.getTime() - startDate.getTime();
+        const seconds = Math.floor(diffMs / 1000);
+        const minutes = Math.floor(seconds / 60);
+        if (minutes > 0) {
+            return `${minutes}m ${seconds % 60}s`;
+        }
+        return `${seconds}s`;
+    };
 
+    const statusConfig = execution ? getStatusConfig(execution.status) : null;
+    const StatusIcon = statusConfig?.icon || Clock;
 
     return (
-        <div className="fixed bottom-0 right-0 w-[420px] max-h-[500px] bg-[hsl(225_12%_8%)] border-l border-t border-[hsl(225_8%_18%)] rounded-tl-xl shadow-2xl flex flex-col z-50">
+        <div className={cn(
+            "fixed bottom-4 right-4 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col z-50 transition-all duration-300",
+            isExpanded 
+                ? "w-[600px] max-h-[700px]" 
+                : "w-[440px] max-h-[520px]"
+        )}>
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(225_8%_18%)]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 rounded-t-2xl">
                 <div className="flex items-center gap-3">
-                    <Activity className="w-5 h-5 text-indigo-400" />
-                    <span className="text-sm font-semibold text-[hsl(220_13%_91%)]">
-                        Execution Monitor
-                    </span>
-                    {isPolling && (
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-purple-500/15 text-purple-400 border border-purple-500/30">
-                            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                            Live
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20">
+                        <Terminal className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div>
+                        <span className="text-sm font-semibold text-zinc-100">
+                            Execution Monitor
                         </span>
-                    )}
+                        {isPolling && (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                                <span className="text-[10px] text-purple-400 font-medium uppercase tracking-wider">Live</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <button
-                    onClick={onClose}
-                    className="p-1.5 rounded-md hover:bg-[hsl(225_9%_15%)] text-[hsl(220_9%_63%)] hover:text-[hsl(220_13%_91%)] transition-colors"
-                >
-                    <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="p-1.5 rounded-lg hover:bg-zinc-800/50 text-zinc-500 hover:text-zinc-200 transition-colors"
+                    >
+                        {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="p-1.5 rounded-lg hover:bg-zinc-800/50 text-zinc-500 hover:text-zinc-200 transition-colors"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
 
             {/* Status Bar */}
-            {execution && (
-                <div className="px-4 py-3 border-b border-[hsl(225_8%_18%)] bg-[hsl(225_10%_11%)]">
+            {execution && statusConfig && (
+                <div className={cn("px-4 py-3 border-b border-zinc-800/60", statusConfig.bg)}>
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            {getStatusIcon(execution.status)}
-                            <span className={cn(
-                                'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
-                                getStatusColor(execution.status)
-                            )}>
-                                {execution.status.charAt(0).toUpperCase() + execution.status.slice(1)}
-                            </span>
+                        <div className="flex items-center gap-3">
+                            <StatusIcon className={cn("w-5 h-5", statusConfig.color, statusConfig.animate && "animate-pulse")} />
+                            <div>
+                                <span className={cn(
+                                    'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border',
+                                    statusConfig.bg, statusConfig.color, statusConfig.border
+                                )}>
+                                    {statusConfig.label}
+                                </span>
+                            </div>
                         </div>
-                        <div className="text-xs text-[hsl(220_7%_45%)]">
-                            Started: {formatTime(execution.startedAt)}
-                            {execution.endedAt && ` • Ended: ${formatTime(execution.endedAt)}`}
+                        <div className="flex items-center gap-4 text-xs text-zinc-500">
+                            <div className="flex items-center gap-1.5">
+                                <Timer className="w-3.5 h-3.5" />
+                                <span className="text-zinc-300">{formatDuration(execution.startedAt, execution.endedAt)}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span className="text-zinc-300">{formatTime(execution.startedAt)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Tab Buttons - Always show for history access */}
-            <div className="flex border-b border-[hsl(225_8%_18%)]">
-                <button
-                    onClick={() => setActiveTab('logs')}
-                    className={cn(
-                        'flex-1 px-3 py-2 text-xs font-medium transition-colors',
-                        activeTab === 'logs'
-                                ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/5'
-                                : 'text-[hsl(220_9%_63%)] hover:text-[hsl(220_13%_91%)] hover:bg-[hsl(225_9%_15%)]'
-                        )}
-                    >
-                        <Activity className="w-3.5 h-3.5 inline mr-1.5" />
-                        Logs ({logs.length})
-                    </button>
+            {/* Tab Buttons */}
+            <div className="flex border-b border-zinc-800/60 bg-zinc-900/30">
+                {[
+                    { id: 'logs', label: 'Logs', icon: Terminal, count: logs.length, color: 'indigo' },
+                    { id: 'results', label: 'Output', icon: Sparkles, count: results.length, color: 'emerald' },
+                    { id: 'history', label: 'History', icon: History, count: executionHistory.length, color: 'amber' },
+                ].map(tab => (
                     <button
-                        onClick={() => setActiveTab('results')}
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as typeof activeTab)}
                         className={cn(
-                            'flex-1 px-3 py-2 text-xs font-medium transition-colors',
-                            activeTab === 'results'
-                                ? 'text-emerald-400 border-b-2 border-emerald-400 bg-emerald-500/5'
-                                : 'text-[hsl(220_9%_63%)] hover:text-[hsl(220_13%_91%)] hover:bg-[hsl(225_9%_15%)]'
+                            'flex-1 px-4 py-2.5 text-xs font-medium transition-all flex items-center justify-center gap-2 border-b-2',
+                            activeTab === tab.id
+                                ? 'border-current bg-white/5'
+                                : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30'
                         )}
+                        style={activeTab === tab.id ? {
+                            color: tab.color === 'indigo' ? 'rgb(129, 140, 248)' : 
+                                   tab.color === 'emerald' ? 'rgb(52, 211, 153)' : 'rgb(251, 191, 36)',
+                        } : {}}
                     >
-                        <FileText className="w-3.5 h-3.5 inline mr-1.5" />
-                        Results ({results.length})
+                        <tab.icon className="w-3.5 h-3.5" />
+                        {tab.label}
+                        <span className={cn(
+                            "px-1.5 py-0.5 rounded-full text-[10px] font-bold min-w-[20px]",
+                            activeTab === tab.id 
+                                ? "bg-current/20" 
+                                : "bg-zinc-800 text-zinc-500"
+                        )}>
+                            {tab.count}
+                        </span>
                     </button>
-                    <button
-                        onClick={() => setActiveTab('history')}
-                        className={cn(
-                            'flex-1 px-3 py-2 text-xs font-medium transition-colors',
-                            activeTab === 'history'
-                                ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/5'
-                                : 'text-[hsl(220_9%_63%)] hover:text-[hsl(220_13%_91%)] hover:bg-[hsl(225_9%_15%)]'
-                        )}
-                    >
-                        <History className="w-3.5 h-3.5 inline mr-1.5" />
-                        History ({executionHistory.length})
-                    </button>
-                </div>
+                ))}
+            </div>
 
             {/* Content Section */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-zinc-900/30">
                 {!executionId && activeTab !== 'history' ? (
+                    /* No Execution State */
                     <div className="flex flex-col items-center justify-center h-full py-8">
-                        <div className="p-4 rounded-full bg-[hsl(225_9%_15%)] mb-4">
-                            <Play className="w-8 h-8 text-[hsl(220_7%_45%)]" />
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 mb-5">
+                            <Zap className="w-10 h-10 text-emerald-400" />
                         </div>
-                        <p className="text-sm text-[hsl(220_9%_63%)] text-center mb-4">
-                            No active execution.<br />
-                            Click Execute to run the workflow.
+                        <h3 className="text-base font-semibold text-zinc-100 mb-1">Ready to Execute</h3>
+                        <p className="text-sm text-zinc-500 text-center mb-5 max-w-[250px]">
+                            Run your workflow to see live execution logs and results
                         </p>
                         <Button
                             onClick={onExecute}
-                            className="bg-emerald-600 hover:bg-emerald-700"
+                            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-500/20"
                         >
                             <Play className="w-4 h-4 mr-2" />
                             Execute Workflow
@@ -302,232 +372,264 @@ export default function ExecutionMonitor({
                 ) : activeTab === 'history' ? (
                     /* History Tab */
                     executionHistory.length === 0 ? (
-                        <div className="flex items-center justify-center h-full py-8">
-                            <div className="text-center">
-                                <History className="w-8 h-8 text-[hsl(220_7%_45%)] mx-auto mb-2" />
-                                <p className="text-sm text-[hsl(220_9%_63%)]">
-                                    No execution history yet
-                                </p>
+                        <div className="flex flex-col items-center justify-center h-full py-8">
+                            <div className="p-4 rounded-xl bg-zinc-800/50 mb-4">
+                                <History className="w-8 h-8 text-zinc-500" />
                             </div>
-                        </div>
-                    ) : (
-                        executionHistory.map((historyItem) => (
-                            <div
-                                key={historyItem.executionId}
-                                className={cn(
-                                    'rounded-lg border overflow-hidden',
-                                    historyItem.status === 'completed'
-                                        ? 'bg-emerald-500/5 border-emerald-500/20'
-                                        : 'bg-red-500/5 border-red-500/20'
-                                )}
-                            >
-                                {/* History Header */}
-                                <button
-                                    onClick={() => toggleHistoryExpanded(historyItem.executionId)}
-                                    className="w-full px-3 py-2 flex items-center justify-between hover:bg-white/5 transition-colors"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        {expandedHistory.has(historyItem.executionId) ? (
-                                            <ChevronDown className="w-4 h-4 text-[hsl(220_9%_63%)]" />
-                                        ) : (
-                                            <ChevronRight className="w-4 h-4 text-[hsl(220_9%_63%)]" />
-                                        )}
-                                        {historyItem.status === 'completed' ? (
-                                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                                        ) : (
-                                            <XCircle className="w-4 h-4 text-red-400" />
-                                        )}
-                                        <span className="text-xs font-mono text-[hsl(220_7%_45%)]">
-                                            {formatTime(historyItem.timestamp)}
-                                        </span>
-                                        <span className={cn(
-                                            'px-1.5 py-0.5 rounded text-xs',
-                                            historyItem.status === 'completed'
-                                                ? 'bg-emerald-500/20 text-emerald-400'
-                                                : 'bg-red-500/20 text-red-400'
-                                        )}>
-                                            {historyItem.status}
-                                        </span>
-                                    </div>
-                                    <div className="text-xs text-[hsl(220_7%_45%)]">
-                                        {historyItem.results.length} agent{historyItem.results.length !== 1 ? 's' : ''}
-                                    </div>
-                                </button>
-                                
-                                {/* History Content - Collapsed by default */}
-                                {expandedHistory.has(historyItem.executionId) && (
-                                    <div className="px-3 py-3 border-t border-[hsl(225_8%_18%)] bg-[hsl(225_12%_8%)] space-y-2">
-                                        {historyItem.results.map((result) => (
-                                            <div key={result.agentId} className="p-2 rounded bg-[hsl(225_10%_11%)] border border-[hsl(225_8%_18%)]">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <Bot className="w-3 h-3 text-indigo-400" />
-                                                        <span className="text-xs font-medium text-[hsl(220_13%_91%)]">
-                                                            {result.agentType || result.agentId}
-                                                        </span>
-                                                    </div>
-                                                    <span className="text-xs text-[hsl(220_7%_45%)]">
-                                                        {result.model}
-                                                    </span>
-                                                </div>
-                                                {result.output !== null && result.output !== undefined && (
-                                                    <div className="text-xs text-[hsl(220_9%_63%)] line-clamp-3 font-mono mt-1">
-                                                        {(() => {
-                                                            const output = result.output;
-                                                            if (typeof output === 'string') {
-                                                                return output.substring(0, 200) + (output.length > 200 ? '...' : '');
-                                                            }
-                                                            return JSON.stringify(output).substring(0, 200);
-                                                        })()}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ))
-                    )
-                ) : activeTab === 'results' ? (
-                    /* Results Tab */
-                    results.length === 0 ? (
-                        <div className="flex items-center justify-center h-full py-8">
-                            <div className="text-center">
-                                <FileText className="w-8 h-8 text-[hsl(220_7%_45%)] mx-auto mb-2" />
-                                <p className="text-sm text-[hsl(220_9%_63%)]">
-                                    {execution?.status === 'running' ? 'Waiting for results...' : 'No results available'}
-                                </p>
-                            </div>
-                        </div>
-                    ) : (
-                        results.map((result) => (
-                            <div
-                                key={result.agentId}
-                                className={cn(
-                                    'rounded-lg border overflow-hidden',
-                                    result.status === 'completed'
-                                        ? 'bg-emerald-500/5 border-emerald-500/20'
-                                        : 'bg-red-500/5 border-red-500/20'
-                                )}
-                            >
-                                {/* Result Header */}
-                                <button
-                                    onClick={() => toggleResultExpanded(result.agentId)}
-                                    className="w-full px-3 py-2 flex items-center justify-between hover:bg-white/5 transition-colors"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        {expandedResults.has(result.agentId) ? (
-                                            <ChevronDown className="w-4 h-4 text-[hsl(220_9%_63%)]" />
-                                        ) : (
-                                            <ChevronRight className="w-4 h-4 text-[hsl(220_9%_63%)]" />
-                                        )}
-                                        <Bot className="w-4 h-4 text-indigo-400" />
-                                        <span className="text-sm font-medium text-[hsl(220_13%_91%)]">
-                                            {result.agentType || result.agentId}
-                                        </span>
-                                        <span className={cn(
-                                            'px-1.5 py-0.5 rounded text-xs',
-                                            result.status === 'completed'
-                                                ? 'bg-emerald-500/20 text-emerald-400'
-                                                : 'bg-red-500/20 text-red-400'
-                                        )}>
-                                            {result.status}
-                                        </span>
-                                    </div>
-                                    <div className="text-xs text-[hsl(220_7%_45%)]">
-                                        {result.latencyMs}ms • {result.tokensUsed?.total || 0} tokens
-                                    </div>
-                                </button>
-                                
-                                {/* Result Content */}
-                                {expandedResults.has(result.agentId) && (
-                                    <div className="px-3 py-3 border-t border-[hsl(225_8%_18%)] bg-[hsl(225_12%_8%)]">
-                                        {result.error ? (
-                                            <div className="text-sm text-red-400 font-mono whitespace-pre-wrap">
-                                                {result.error}
-                                            </div>
-                                        ) : result.output ? (
-                                            <div className="text-sm text-[hsl(220_13%_91%)] whitespace-pre-wrap font-mono leading-relaxed max-h-[300px] overflow-y-auto">
-                                                {typeof result.output === 'string' 
-                                                    ? result.output 
-                                                    : JSON.stringify(result.output, null, 2)}
-                                            </div>
-                                        ) : (
-                                            <div className="text-sm text-[hsl(220_9%_63%)] italic">
-                                                No output
-                                            </div>
-                                        )}
-                                        <div className="mt-2 pt-2 border-t border-[hsl(225_8%_18%)] text-xs text-[hsl(220_7%_45%)]">
-                                            Model: {result.model} • Provider: {result.provider}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))
-                    )
-                ) : logs.length === 0 ? (
-                    <div className="flex items-center justify-center h-full py-8">
-                        <div className="text-center">
-                            <Activity className="w-8 h-8 text-[hsl(220_7%_45%)] mx-auto mb-2 animate-pulse" />
-                            <p className="text-sm text-[hsl(220_9%_63%)]">
-                                Waiting for execution logs...
+                            <p className="text-sm font-medium text-zinc-300 mb-1">No History Yet</p>
+                            <p className="text-xs text-zinc-500">
+                                Completed executions will appear here
                             </p>
                         </div>
-                    </div>
-                ) : (
-                    logs.map((log, index) => {
-                        const logLevel = log.level || log.type;
-                        return (
-                            <div
-                                key={index}
-                                className={cn(
-                                    'px-3 py-2 rounded-lg border',
-                                    logLevel === 'error'
-                                        ? 'bg-red-500/5 border-red-500/20'
-                                        : logLevel === 'success'
-                                            ? 'bg-emerald-500/5 border-emerald-500/20'
-                                            : 'bg-[hsl(225_10%_11%)] border-[hsl(225_8%_18%)]'
-                                )}
-                            >
-                                <div className="flex items-start gap-2">
-                                    <span className="text-[10px] font-mono text-[hsl(220_7%_45%)] shrink-0 mt-0.5">
-                                        {formatTime(log.timestamp)}
-                                    </span>
-                                    <div className="flex-1 min-w-0">
-                                        {log.agentId && (
-                                            <span className="inline-flex items-center gap-1 text-xs text-indigo-400 mr-2">
-                                                <Bot className="w-3 h-3" />
-                                                {log.agentId}
-                                            </span>
+                    ) : (
+                        <div className="space-y-2">
+                            {executionHistory.map((historyItem) => {
+                                const config = getStatusConfig(historyItem.status);
+                                return (
+                                    <div
+                                        key={historyItem.executionId}
+                                        className={cn(
+                                            'rounded-xl border overflow-hidden transition-all',
+                                            config.bg, config.border
                                         )}
-                                        <span className={cn(
-                                            'text-sm',
-                                            logLevel === 'error' ? 'text-red-400' :
-                                                logLevel === 'success' ? 'text-emerald-400' :
-                                                    'text-[hsl(220_13%_91%)]'
-                                        )}>
-                                            {log.message}
-                                        </span>
-                                        {log.details && (
-                                            <div className="mt-1 text-xs text-[hsl(220_7%_45%)]">
-                                                {Object.entries(log.details).map(([key, val]) => (
-                                                    <span key={key} className="mr-3">
-                                                        {key}: {JSON.stringify(val)}
-                                                    </span>
+                                    >
+                                        <button
+                                            onClick={() => toggleHistoryExpanded(historyItem.executionId)}
+                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 dark:hover:bg-black/5 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                {expandedHistory.has(historyItem.executionId) ? (
+                                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                                ) : (
+                                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                                )}
+                                                <config.icon className={cn("w-4 h-4", config.color)} />
+                                                <span className="text-xs font-mono text-muted-foreground">
+                                                    {formatTime(historyItem.timestamp)}
+                                                </span>
+                                                <span className={cn(
+                                                    'px-2 py-0.5 rounded-md text-xs font-medium',
+                                                    config.bg, config.color
+                                                )}>
+                                                    {config.label}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <Cpu className="w-3.5 h-3.5" />
+                                                {historyItem.results.length} agent{historyItem.results.length !== 1 ? 's' : ''}
+                                            </div>
+                                        </button>
+                                        
+                                        {expandedHistory.has(historyItem.executionId) && (
+                                            <div className="px-4 py-3 border-t border-border/50 bg-background/50 space-y-2">
+                                                {historyItem.results.map((result) => (
+                                                    <div key={result.agentId} className="p-3 rounded-lg bg-muted/50 border border-border">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <Bot className="w-3.5 h-3.5 text-primary" />
+                                                                <span className="text-xs font-medium text-foreground">
+                                                                    {result.agentType || result.agentId}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[10px] text-muted-foreground font-mono">
+                                                                {result.model}
+                                                            </span>
+                                                        </div>
+                                                        {result.output !== null && result.output !== undefined && (
+                                                            <div className="text-xs text-muted-foreground line-clamp-3 font-mono bg-background/50 rounded p-2">
+                                                                {(() => {
+                                                                    const output = result.output;
+                                                                    if (typeof output === 'string') {
+                                                                        return output.substring(0, 200) + (output.length > 200 ? '...' : '');
+                                                                    }
+                                                                    return JSON.stringify(output).substring(0, 200);
+                                                                })()}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 ))}
                                             </div>
                                         )}
                                     </div>
-                                </div>
+                                );
+                            })}
+                        </div>
+                    )
+                ) : activeTab === 'results' ? (
+                    /* Results Tab */
+                    results.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full py-8">
+                            <div className="p-4 rounded-xl bg-muted/50 mb-4">
+                                <FileText className={cn("w-8 h-8", execution?.status === 'running' ? "text-purple-400 animate-pulse" : "text-muted-foreground")} />
                             </div>
-                        );
-                    })
+                            <p className="text-sm font-medium text-foreground mb-1">
+                                {execution?.status === 'running' ? 'Processing...' : 'No Results'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                {execution?.status === 'running' ? 'Results will appear as agents complete' : 'No results available'}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {results.map((result) => {
+                                const resultConfig = getStatusConfig(result.status);
+                                return (
+                                    <div
+                                        key={result.agentId}
+                                        className={cn(
+                                            'rounded-xl border overflow-hidden transition-all',
+                                            resultConfig.bg, resultConfig.border
+                                        )}
+                                    >
+                                        <button
+                                            onClick={() => toggleResultExpanded(result.agentId)}
+                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 dark:hover:bg-black/5 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                {expandedResults.has(result.agentId) ? (
+                                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                                ) : (
+                                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                                )}
+                                                <div className="p-1.5 rounded-lg bg-primary/10">
+                                                    <Bot className="w-4 h-4 text-primary" />
+                                                </div>
+                                                <span className="text-sm font-medium text-foreground">
+                                                    {result.agentType || result.agentId}
+                                                </span>
+                                                <span className={cn(
+                                                    'px-2 py-0.5 rounded-md text-xs font-medium',
+                                                    resultConfig.bg, resultConfig.color
+                                                )}>
+                                                    {resultConfig.label}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                                <span className="flex items-center gap-1">
+                                                    <Timer className="w-3 h-3" />
+                                                    {result.latencyMs}ms
+                                                </span>
+                                                <span>{result.tokensUsed?.total || 0} tokens</span>
+                                            </div>
+                                        </button>
+                                        
+                                        {expandedResults.has(result.agentId) && (
+                                            <div className="px-4 py-3 border-t border-border/50 bg-background/50">
+                                                {result.error ? (
+                                                    <div className="text-sm text-red-400 font-mono whitespace-pre-wrap p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+                                                        {result.error}
+                                                    </div>
+                                                ) : result.output ? (
+                                                    <div className="relative">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                copyToClipboard(
+                                                                    typeof result.output === 'string' ? result.output : JSON.stringify(result.output, null, 2),
+                                                                    result.agentId
+                                                                );
+                                                            }}
+                                                            className="absolute top-2 right-2 p-1.5 rounded-md bg-background/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                                        >
+                                                            {copiedId === result.agentId ? (
+                                                                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                                            ) : (
+                                                                <Copy className="w-3.5 h-3.5" />
+                                                            )}
+                                                        </button>
+                                                        <div className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed max-h-[300px] overflow-y-auto p-3 rounded-lg bg-muted/30 border border-border">
+                                                            {typeof result.output === 'string' 
+                                                                ? result.output 
+                                                                : JSON.stringify(result.output, null, 2)}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-sm text-muted-foreground italic p-3 rounded-lg bg-muted/30">
+                                                        No output
+                                                    </div>
+                                                )}
+                                                <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+                                                    <span>Model: <span className="text-foreground font-medium">{result.model}</span></span>
+                                                    <span>Provider: <span className="text-foreground font-medium">{result.provider}</span></span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )
+                ) : logs.length === 0 ? (
+                    /* Empty Logs State */
+                    <div className="flex flex-col items-center justify-center h-full py-8">
+                        <div className="p-4 rounded-xl bg-muted/50 mb-4">
+                            <Activity className="w-8 h-8 text-purple-400 animate-pulse" />
+                        </div>
+                        <p className="text-sm font-medium text-foreground mb-1">Waiting for Logs</p>
+                        <p className="text-xs text-muted-foreground">
+                            Logs will stream in real-time
+                        </p>
+                    </div>
+                ) : (
+                    /* Logs Tab */
+                    <div className="space-y-1.5">
+                        {logs.map((log, index) => {
+                            const logLevel = log.level || log.type;
+                            const logConfig = {
+                                error: { bg: 'bg-red-500/5', border: 'border-red-500/20', text: 'text-red-400', dot: 'bg-red-400' },
+                                success: { bg: 'bg-emerald-500/5', border: 'border-emerald-500/20', text: 'text-emerald-400', dot: 'bg-emerald-400' },
+                                warning: { bg: 'bg-amber-500/5', border: 'border-amber-500/20', text: 'text-amber-400', dot: 'bg-amber-400' },
+                                info: { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-primary' },
+                            }[logLevel || 'info'] || { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-primary' };
+
+                            return (
+                                <div
+                                    key={index}
+                                    className={cn(
+                                        'px-3 py-2.5 rounded-lg border transition-all',
+                                        logConfig.bg, logConfig.border
+                                    )}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                                            <span className={cn("w-1.5 h-1.5 rounded-full", logConfig.dot)} />
+                                            <span className="text-[10px] font-mono text-muted-foreground">
+                                                {formatTime(log.timestamp)}
+                                            </span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            {log.agentId && (
+                                                <span className="inline-flex items-center gap-1 text-xs text-primary mr-2 font-medium">
+                                                    <Bot className="w-3 h-3" />
+                                                    {log.agentId}
+                                                </span>
+                                            )}
+                                            <span className={cn('text-sm', logConfig.text)}>
+                                                {log.message}
+                                            </span>
+                                            {log.details && (
+                                                <div className="mt-1.5 text-xs text-muted-foreground font-mono bg-background/50 rounded px-2 py-1">
+                                                    {Object.entries(log.details).map(([key, val]) => (
+                                                        <span key={key} className="mr-3">
+                                                            <span className="text-primary">{key}</span>: {JSON.stringify(val)}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        <div ref={logsEndRef} />
+                    </div>
                 )}
             </div>
 
             {/* Footer Actions */}
-            <div className="px-4 py-3 border-t border-[hsl(225_8%_18%)] flex items-center justify-between">
-                <div className="text-xs text-[hsl(220_7%_45%)]">
+            <div className="px-4 py-3 border-t border-zinc-800/60 bg-zinc-900/50 flex items-center justify-between rounded-b-2xl">
+                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                    <Terminal className="w-3.5 h-3.5" />
                     {logs.length} log entries
                 </div>
                 <div className="flex items-center gap-2">
@@ -535,7 +637,7 @@ export default function ExecutionMonitor({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                            className="h-8 bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
                         >
                             <Pause className="w-3.5 h-3.5 mr-1.5" />
                             Stop
@@ -546,7 +648,7 @@ export default function ExecutionMonitor({
                         size="sm"
                         onClick={onExecute}
                         disabled={execution?.status === 'running'}
-                        className="bg-transparent border-[hsl(225_8%_18%)] text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-400"
+                        className="h-8 bg-transparent border-zinc-700 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/30 disabled:opacity-50"
                     >
                         <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                         Re-run

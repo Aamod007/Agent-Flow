@@ -42,24 +42,24 @@ interface MetricCardProps {
 
 function MetricCard({ title, value, change, changeType = "neutral", icon: Icon, iconColor, loading }: MetricCardProps) {
     return (
-        <Card className="bg-zinc-900/50 border-zinc-800/50">
+        <Card className="bg-card border-border">
             <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                     <div>
-                        <p className="text-sm font-medium text-zinc-400">{title}</p>
+                        <p className="text-sm font-medium text-muted-foreground">{title}</p>
                         {loading ? (
                             <div className="flex items-center mt-2">
-                                <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
+                                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                             </div>
                         ) : (
                             <>
-                                <p className="text-2xl font-bold text-zinc-100 mt-2">{value}</p>
+                                <p className="text-2xl font-bold text-foreground mt-2">{value}</p>
                                 {change && (
                                     <div className={cn(
                                         "flex items-center gap-1 mt-2 text-sm",
-                                        changeType === "positive" && "text-emerald-400",
-                                        changeType === "negative" && "text-red-400",
-                                        changeType === "neutral" && "text-zinc-500"
+                                        changeType === "positive" && "text-emerald-500",
+                                        changeType === "negative" && "text-red-500",
+                                        changeType === "neutral" && "text-muted-foreground"
                                     )}>
                                         {changeType === "positive" && <TrendingUp className="w-4 h-4" />}
                                         {changeType === "negative" && <TrendingDown className="w-4 h-4" />}
@@ -81,13 +81,13 @@ function MetricCard({ title, value, change, changeType = "neutral", icon: Icon, 
 function ExecutionsChart({ data, loading }: { data: AnalyticsHistory | null; loading: boolean }) {
     if (loading) {
         return (
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-200">Executions Over Time</CardTitle>
+                    <CardTitle className="text-sm text-foreground">Executions Over Time</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center justify-center h-[250px]">
-                        <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
+                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                     </div>
                 </CardContent>
             </Card>
@@ -98,13 +98,13 @@ function ExecutionsChart({ data, loading }: { data: AnalyticsHistory | null; loa
 
     if (chartData.length === 0) {
         return (
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-200">Executions Over Time</CardTitle>
+                    <CardTitle className="text-sm text-foreground">Executions Over Time</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center justify-center h-[250px] rounded-lg bg-zinc-950 border border-dashed border-zinc-800">
-                        <div className="text-center text-zinc-500">
+                    <div className="flex items-center justify-center h-[250px] rounded-lg bg-muted/50 border border-dashed border-border">
+                        <div className="text-center text-muted-foreground">
                             <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-50" />
                             <p className="text-sm">No execution data yet</p>
                             <p className="text-xs mt-1">Run workflows to see trends</p>
@@ -116,9 +116,9 @@ function ExecutionsChart({ data, loading }: { data: AnalyticsHistory | null; loa
     }
 
     return (
-        <Card className="bg-zinc-900/50 border-zinc-800/50">
+        <Card className="bg-card border-border">
             <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-zinc-200">Executions Over Time</CardTitle>
+                <CardTitle className="text-sm text-foreground">Executions Over Time</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
@@ -177,13 +177,13 @@ function ExecutionsChart({ data, loading }: { data: AnalyticsHistory | null; loa
 function ExecutionDistributionChart({ analytics, loading }: { analytics: AnalyticsData | null; loading: boolean }) {
     if (loading) {
         return (
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-200">Execution Distribution</CardTitle>
+                    <CardTitle className="text-sm text-foreground">Execution Distribution</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center justify-center h-[250px]">
-                        <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
+                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                     </div>
                 </CardContent>
             </Card>
@@ -193,13 +193,13 @@ function ExecutionDistributionChart({ analytics, loading }: { analytics: Analyti
     const total = analytics?.totalExecutions || 0;
     if (total === 0) {
         return (
-            <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-200">Execution Distribution</CardTitle>
+                    <CardTitle className="text-sm text-foreground">Execution Distribution</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center justify-center h-[250px] rounded-lg bg-zinc-950 border border-dashed border-zinc-800">
-                        <div className="text-center text-zinc-500">
+                    <div className="flex items-center justify-center h-[250px] rounded-lg bg-muted/50 border border-dashed border-border">
+                        <div className="text-center text-muted-foreground">
                             <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-50" />
                             <p className="text-sm">No execution data yet</p>
                             <p className="text-xs mt-1">Run workflows to see distribution</p>
@@ -216,9 +216,9 @@ function ExecutionDistributionChart({ analytics, loading }: { analytics: Analyti
     ].filter(item => item.value > 0);
 
     return (
-        <Card className="bg-zinc-900/50 border-zinc-800/50">
+        <Card className="bg-card border-border">
             <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-zinc-200">Execution Distribution</CardTitle>
+                <CardTitle className="text-sm text-foreground">Execution Distribution</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center justify-center">
@@ -233,7 +233,7 @@ function ExecutionDistributionChart({ analytics, loading }: { analytics: Analyti
                                 paddingAngle={5}
                                 dataKey="value"
                                 label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                                labelLine={{ stroke: '#71717a' }}
+                                labelLine={{ stroke: 'currentColor', className: 'text-muted-foreground' }}
                             >
                                 {pieData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -241,10 +241,10 @@ function ExecutionDistributionChart({ analytics, loading }: { analytics: Analyti
                             </Pie>
                             <Tooltip
                                 contentStyle={{
-                                    backgroundColor: '#18181b',
-                                    border: '1px solid #27272a',
+                                    backgroundColor: 'hsl(var(--card))',
+                                    border: '1px solid hsl(var(--border))',
                                     borderRadius: '8px',
-                                    color: '#e4e4e7',
+                                    color: 'hsl(var(--foreground))',
                                     fontSize: '12px'
                                 }}
                             />
@@ -255,7 +255,7 @@ function ExecutionDistributionChart({ analytics, loading }: { analytics: Analyti
                     {pieData.map((item) => (
                         <div key={item.name} className="flex items-center gap-2">
                             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                            <span className="text-xs text-zinc-400">{item.name}: {item.value}</span>
+                            <span className="text-xs text-muted-foreground">{item.name}: {item.value}</span>
                         </div>
                     ))}
                 </div>
@@ -283,10 +283,10 @@ function ActivityItem({
                 <Icon className="w-3.5 h-3.5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-zinc-200 truncate">{title}</p>
-                <p className="text-xs text-zinc-500 truncate">{description}</p>
+                <p className="text-sm font-medium text-foreground truncate">{title}</p>
+                <p className="text-xs text-muted-foreground truncate">{description}</p>
             </div>
-            <span className="text-xs text-zinc-500 shrink-0">{time}</span>
+            <span className="text-xs text-muted-foreground shrink-0">{time}</span>
         </div>
     );
 }
@@ -343,7 +343,7 @@ export default function Analytics() {
             case 'running':
                 return { icon: Activity, color: "bg-indigo-600" };
             default:
-                return { icon: Clock, color: "bg-zinc-800" };
+                return { icon: Clock, color: "bg-muted" };
         }
     };
 
@@ -352,10 +352,10 @@ export default function Analytics() {
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-semibold text-zinc-100">
+                    <h1 className="text-xl font-semibold text-foreground">
                         Analytics
                     </h1>
-                    <p className="text-zinc-500 text-sm mt-0.5">
+                    <p className="text-muted-foreground text-sm mt-0.5">
                         Track performance and usage across your workflows
                     </p>
                 </div>
@@ -365,7 +365,7 @@ export default function Analytics() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 bg-transparent border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+                            className="h-8 bg-transparent border-border text-foreground hover:bg-muted hover:text-foreground"
                             onClick={() => setDateRange(dateRange === 7 ? 14 : dateRange === 14 ? 30 : 7)}
                         >
                             <Calendar className="w-3.5 h-3.5 mr-1.5" />
@@ -376,7 +376,7 @@ export default function Analytics() {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 bg-transparent border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+                        className="h-8 bg-transparent border-border text-foreground hover:bg-muted hover:text-foreground"
                     >
                         <Download className="w-3.5 h-3.5 mr-1.5" />
                         Export
@@ -445,16 +445,16 @@ export default function Analytics() {
             {/* Bottom Row */}
             <div className="grid gap-5 lg:grid-cols-3">
                 {/* Recent Activity */}
-                <Card className="lg:col-span-2 bg-zinc-900/50 border-zinc-800/50">
+                <Card className="lg:col-span-2 bg-card border-border">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-zinc-200">
+                        <CardTitle className="text-sm text-foreground">
                             Recent Activity
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="divide-y divide-zinc-800">
+                    <CardContent className="divide-y divide-border">
                         {loading ? (
                             <div className="flex items-center justify-center py-8">
-                                <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
+                                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                             </div>
                         ) : analytics?.recentExecutions && analytics.recentExecutions.length > 0 ? (
                             analytics.recentExecutions.map((execution) => {
@@ -471,7 +471,7 @@ export default function Analytics() {
                                 );
                             })
                         ) : (
-                            <div className="text-center py-8 text-zinc-500">
+                            <div className="text-center py-8 text-muted-foreground">
                                 <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
                                 <p className="text-sm">No recent activity</p>
                                 <p className="text-xs mt-1">Execute a workflow to see activity here</p>
@@ -481,53 +481,53 @@ export default function Analytics() {
                 </Card>
 
                 {/* Execution Stats */}
-                <Card className="bg-zinc-900/50 border-zinc-800/50">
+                <Card className="bg-card border-border">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-zinc-200">
+                        <CardTitle className="text-sm text-foreground">
                             Execution Summary
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         {loading ? (
                             <div className="flex items-center justify-center py-8">
-                                <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
+                                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                             </div>
                         ) : (
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-zinc-400">Total</span>
-                                    <span className="text-base font-semibold text-zinc-100">
+                                    <span className="text-sm text-muted-foreground">Total</span>
+                                    <span className="text-base font-semibold text-foreground">
                                         {analytics?.totalExecutions || 0}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-zinc-400">Successful</span>
-                                    <span className="text-base font-semibold text-emerald-400">
+                                    <span className="text-sm text-muted-foreground">Successful</span>
+                                    <span className="text-base font-semibold text-emerald-500">
                                         {analytics?.successfulExecutions || 0}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-zinc-400">Failed</span>
-                                    <span className="text-base font-semibold text-red-400">
+                                    <span className="text-sm text-muted-foreground">Failed</span>
+                                    <span className="text-base font-semibold text-red-500">
                                         {analytics?.failedExecutions || 0}
                                     </span>
                                 </div>
-                                <div className="pt-3 border-t border-zinc-800">
+                                <div className="pt-3 border-t border-border">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-sm text-zinc-400">Success Rate</span>
+                                        <span className="text-sm text-muted-foreground">Success Rate</span>
                                         <span className={cn(
                                             "text-base font-semibold",
                                             (analytics?.successRate || 0) >= 90
-                                                ? "text-emerald-400"
+                                                ? "text-emerald-500"
                                                 : (analytics?.successRate || 0) >= 70
-                                                    ? "text-amber-400"
-                                                    : "text-red-400"
+                                                    ? "text-amber-500"
+                                                    : "text-red-500"
                                         )}>
                                             {analytics?.successRate || 0}%
                                         </span>
                                     </div>
                                     {/* Progress bar */}
-                                    <div className="mt-2 h-1.5 bg-zinc-950 rounded-full overflow-hidden">
+                                    <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
                                         <div
                                             className={cn(
                                                 "h-full rounded-full transition-all",

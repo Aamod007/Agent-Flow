@@ -60,20 +60,20 @@ function MetricCard({
     iconBg: string;
 }) {
     return (
-        <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800/50 hover:border-zinc-700/50 transition-colors">
-            <div className="flex items-center justify-between mb-4">
-                <div className={cn("p-2.5 rounded-lg", iconBg)}>
-                    <Icon className="w-5 h-5" />
+        <div className="p-4 rounded-lg bg-zinc-900/50 border border-zinc-800/50 hover:border-zinc-700/50 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+                <div className={cn("p-2 rounded-lg", iconBg)}>
+                    <Icon className="w-4 h-4" />
                 </div>
                 {trend && (
-                    <span className="flex items-center gap-1.5 text-sm text-emerald-400">
-                        <TrendingUp className="w-4 h-4" />
+                    <span className="flex items-center gap-1 text-xs text-emerald-400">
+                        <TrendingUp className="w-3 h-3" />
                         {trend}
                     </span>
                 )}
             </div>
-            <p className="text-3xl font-semibold text-zinc-100">{value}</p>
-            <p className="text-sm text-zinc-500 mt-1.5">{title}</p>
+            <p className="text-2xl font-semibold text-zinc-100">{value}</p>
+            <p className="text-xs text-zinc-500 mt-1">{title}</p>
         </div>
     );
 }
@@ -134,39 +134,39 @@ function WorkflowRow({
     };
 
     return (
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-zinc-900/30 border border-zinc-800/50 hover:border-zinc-700/50 transition-all group">
-            <div className="p-2.5 rounded-lg bg-indigo-500/10">
-                <Workflow className="w-5 h-5 text-indigo-400" />
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-900/30 border border-zinc-800/50 hover:border-zinc-700/50 transition-all group">
+            <div className="p-2 rounded-lg bg-indigo-500/10">
+                <Workflow className="w-4 h-4 text-indigo-400" />
             </div>
             
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                     <h3 className="text-sm font-medium text-zinc-200 truncate">{workflow.name}</h3>
                     {getStatusBadge(workflow.status)}
                 </div>
-                <p className="text-sm text-zinc-500 truncate mt-1">
-                    {workflow.description || "No description"} • Updated {formatDate(workflow.updatedAt)}
+                <p className="text-xs text-zinc-500 truncate mt-0.5">
+                    {workflow.description || "No description"} • {formatDate(workflow.updatedAt)}
                 </p>
             </div>
 
-            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={onRun}
                     disabled={isRunning}
-                    className="h-8 px-3 text-sm text-emerald-400 hover:text-emerald-400 hover:bg-emerald-500/10"
+                    className="h-7 px-2 text-xs text-emerald-400 hover:text-emerald-400 hover:bg-emerald-500/10"
                 >
                     {isRunning ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : (
-                        <Play className="w-4 h-4" />
+                        <Play className="w-3.5 h-3.5" />
                     )}
                 </Button>
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-3 text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                    className="h-7 px-2 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
                     asChild
                 >
                     <Link to={`/dashboard/editor/${workflow.id}`}>
@@ -175,8 +175,8 @@ function WorkflowRow({
                 </Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800">
-                            <MoreVertical className="w-4 h-4" />
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800">
+                            <MoreVertical className="w-3.5 h-3.5" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 min-w-[140px]">
@@ -288,18 +288,18 @@ export default function DashboardHome() {
     const totalExecutions = analytics?.totalExecutions ?? 0;
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-zinc-100">Dashboard</h1>
-                    <p className="text-sm text-zinc-500 mt-1">Manage your AI agent workflows</p>
+                    <h1 className="text-xl font-semibold text-zinc-100">Home</h1>
+                    <p className="text-sm text-zinc-500 mt-0.5">Manage your AI agent workflows</p>
                 </div>
 
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                     <DialogTrigger asChild>
-                        <Button size="sm" className="h-11 px-6 text-base bg-indigo-600 hover:bg-indigo-700">
-                            <Plus className="mr-2 h-5 w-5" />
+                        <Button size="sm" className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700">
+                            <Plus className="mr-1.5 h-4 w-4" />
                             New Workflow
                         </Button>
                     </DialogTrigger>
@@ -355,8 +355,8 @@ export default function DashboardHome() {
                 </Dialog>
             </div>
 
-            {/* Metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {/* Metrics - n8n style compact grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard
                     title="Total Workflows"
                     value={workflows.length}
@@ -386,14 +386,14 @@ export default function DashboardHome() {
 
             {/* Workflows List */}
             <div>
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-medium text-zinc-400">Recent Workflows</h2>
-                    <Link to="/dashboard/workflows" className="text-base text-indigo-400 hover:text-indigo-300">
-                        View all <ArrowRight className="inline w-5 h-5" />
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wide">Recent Workflows</h2>
+                    <Link to="/dashboard/workflows" className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        View all <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-3">
                     {loading ? (
                         <>
                             <WorkflowSkeleton />
@@ -401,18 +401,18 @@ export default function DashboardHome() {
                             <WorkflowSkeleton />
                         </>
                     ) : workflows.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-24 rounded-xl border border-dashed border-zinc-800 bg-zinc-900/20">
-                            <div className="p-6 rounded-full bg-zinc-800/50 mb-6">
-                                <Workflow className="w-10 h-10 text-zinc-600" />
+                        <div className="flex flex-col items-center justify-center py-16 rounded-lg border border-dashed border-zinc-800 bg-zinc-900/20">
+                            <div className="p-4 rounded-full bg-zinc-800/50 mb-4">
+                                <Workflow className="w-8 h-8 text-zinc-600" />
                             </div>
-                            <p className="text-lg text-zinc-400 mb-2">No workflows yet</p>
-                            <p className="text-base text-zinc-600 mb-6">Create your first workflow to get started</p>
+                            <p className="text-sm text-zinc-400 mb-1">No workflows yet</p>
+                            <p className="text-xs text-zinc-600 mb-4">Create your first workflow to get started</p>
                             <Button
                                 size="sm"
                                 onClick={() => setIsCreateOpen(true)}
-                                className="h-11 px-6 text-base bg-indigo-600 hover:bg-indigo-700"
+                                className="h-8 px-4 bg-indigo-600 hover:bg-indigo-700"
                             >
-                                <Plus className="w-5 h-5 mr-2" />
+                                <Plus className="w-4 h-4 mr-1.5" />
                                 Create Workflow
                             </Button>
                         </div>

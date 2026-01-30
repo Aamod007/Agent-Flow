@@ -168,7 +168,7 @@ const DEFAULT_PROVIDERS: ModelProvider[] = [
 export function useAgents() {
     const [templates] = useState<AgentTemplate[]>(AGENT_TEMPLATES);
     const [providers, setProviders] = useState<ModelProvider[]>(DEFAULT_PROVIDERS);
-    const [loading, setLoading] = useState(false);
+    const [_loading, _setLoading] = useState(false);
 
     // Check Ollama connection
     const checkOllamaConnection = useCallback(async () => {
@@ -245,7 +245,7 @@ export function useAgents() {
     return {
         templates,
         providers,
-        loading,
+        loading: _loading,
         getTemplate,
         getProvider,
         getModel,

@@ -61,6 +61,16 @@ app.use('/api/user', createProxy(WORKFLOW_SERVICE_URL, 'Workflow Service', (req)
     return '/user' + (req.url === '/' ? '' : req.url);
 }));
 
+// Proxy connections endpoints to Workflow Service
+app.use('/api/connections', createProxy(WORKFLOW_SERVICE_URL, 'Workflow Service', (req) => {
+    return '/connections' + (req.url === '/' ? '' : req.url);
+}));
+
+// Proxy OAuth endpoints to Workflow Service
+app.use('/api/oauth', createProxy(WORKFLOW_SERVICE_URL, 'Workflow Service', (req) => {
+    return '/oauth' + (req.url === '/' ? '' : req.url);
+}));
+
 // Proxy model provider endpoints to Execution Service
 app.use('/api/providers', createProxy(EXECUTION_SERVICE_URL, 'Execution Service', (req) => {
     return '/providers' + (req.url === '/' ? '' : req.url);

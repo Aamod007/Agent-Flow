@@ -6,7 +6,8 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root,
+  .dark {
     /* AgentFlow Dark Theme - Default */
     /* Backgrounds */
     --bg-primary: 225 15% 5%;
@@ -79,6 +80,65 @@
     --chart-3: var(--viz-3);
     --chart-4: var(--viz-4);
     --chart-5: var(--viz-5);
+  }
+
+  .light {
+    /* AgentFlow Light Theme */
+    /* Backgrounds */
+    --bg-primary: 0 0% 100%;
+    --bg-secondary: 220 14% 96%;
+    --bg-tertiary: 220 13% 91%;
+    --bg-hover: 220 12% 88%;
+
+    /* Text */
+    --text-primary: 224 71% 4%;
+    --text-secondary: 220 9% 46%;
+    --text-tertiary: 220 8% 56%;
+    --text-disabled: 220 5% 70%;
+
+    /* Borders */
+    --border-subtle: 220 13% 91%;
+    --border-default: 220 13% 85%;
+    --border-strong: 220 12% 75%;
+
+    /* Brand Colors */
+    --brand-primary: 239 84% 57%;
+    --brand-secondary: 265 75% 52%;
+    --brand-accent: 217 91% 50%;
+
+    /* Semantic Colors */
+    --success: 160 84% 29%;
+    --warning: 38 92% 45%;
+    --error: 0 84% 50%;
+    --info: 189 94% 33%;
+
+    /* Agent Status */
+    --agent-idle: 220 9% 56%;
+    --agent-running: 265 75% 52%;
+    --agent-success: 160 84% 29%;
+    --agent-error: 0 84% 50%;
+    --agent-waiting: 38 92% 45%;
+
+    /* ShadCN compatibility */
+    --background: var(--bg-primary);
+    --foreground: var(--text-primary);
+    --card: var(--bg-primary);
+    --card-foreground: var(--text-primary);
+    --popover: var(--bg-primary);
+    --popover-foreground: var(--text-primary);
+    --primary: var(--brand-primary);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--bg-secondary);
+    --secondary-foreground: var(--text-primary);
+    --muted: var(--bg-secondary);
+    --muted-foreground: var(--text-secondary);
+    --accent: var(--brand-secondary);
+    --accent-foreground: 0 0% 100%;
+    --destructive: var(--error);
+    --destructive-foreground: 0 0% 100%;
+    --border: var(--border-subtle);
+    --input: var(--bg-secondary);
+    --ring: var(--brand-primary);
   }
 }
 
@@ -317,4 +377,108 @@
 .react-flow__edge-path:hover {
   stroke-width: 3 !important;
   filter: drop-shadow(0 0 8px hsla(var(--brand-primary), 0.6));
+}
+
+/* n8n-style Connection Type Colors */
+.react-flow__edge.edge-main .react-flow__edge-path {
+  stroke: hsl(var(--brand-primary)) !important;
+}
+
+.react-flow__edge.edge-ai .react-flow__edge-path {
+  stroke: #10b981 !important;
+}
+
+.react-flow__edge.edge-tool .react-flow__edge-path {
+  stroke: #f59e0b !important;
+}
+
+.react-flow__edge.edge-data .react-flow__edge-path {
+  stroke: #3b82f6 !important;
+}
+
+.react-flow__edge.edge-error .react-flow__edge-path {
+  stroke: #ef4444 !important;
+  stroke-dasharray: 5 5 !important;
+}
+
+/* Animated edge flow effect */
+@keyframes flowAnimation {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 8 4 !important;
+  animation: flowAnimation 0.5s linear infinite;
+}
+
+/* Edge status styles */
+.react-flow__edge.edge-running .react-flow__edge-path {
+  stroke: #22c55e !important;
+  stroke-width: 3 !important;
+  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.5));
+  stroke-dasharray: 8 4 !important;
+  animation: flowAnimation 0.3s linear infinite;
+}
+
+.react-flow__edge.edge-success .react-flow__edge-path {
+  stroke: #22c55e !important;
+  stroke-width: 2.5 !important;
+}
+
+.react-flow__edge.edge-error .react-flow__edge-path {
+  stroke: #ef4444 !important;
+  stroke-width: 2.5 !important;
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.5));
+}
+
+/* Edge label styling */
+.react-flow__edge-textbg {
+  fill: hsl(var(--bg-tertiary)) !important;
+}
+
+.react-flow__edge-text {
+  fill: hsl(var(--text-primary)) !important;
+  font-size: 10px !important;
+}
+
+/* Connection line while dragging */
+.react-flow__connection-line {
+  stroke: hsl(var(--brand-primary)) !important;
+  stroke-width: 2 !important;
+  stroke-dasharray: 5 5 !important;
+}
+
+/* Handle styles for different connection types */
+.react-flow__handle {
+  width: 12px !important;
+  height: 12px !important;
+  border: 2px solid hsl(var(--brand-primary)) !important;
+  background: hsl(var(--bg-secondary)) !important;
+  transition: all 0.2s ease;
+}
+
+.react-flow__handle:hover {
+  transform: scale(1.3);
+  box-shadow: 0 0 10px hsla(var(--brand-primary), 0.6);
+}
+
+.react-flow__handle.handle-ai {
+  border-color: #10b981 !important;
+}
+
+.react-flow__handle.handle-tool {
+  border-color: #f59e0b !important;
+}
+
+.react-flow__handle.handle-data {
+  border-color: #3b82f6 !important;
+}
+
+.react-flow__handle.handle-error {
+  border-color: #ef4444 !important;
 }

@@ -78,7 +78,7 @@ function SwitchNode({ data, selected }: NodeProps) {
 
             {/* Cases */}
             <div className="p-3 space-y-2">
-                {cases.map((c, index) => (
+                {cases.map((c) => (
                     <div
                         key={c.id}
                         className={cn(

@@ -6,7 +6,7 @@ import WorkflowsList from "@/pages/WorkflowsList";
 import Templates from "@/pages/Templates";
 import Analytics from "@/pages/Analytics";
 import Settings from "@/pages/Settings";
-import Connections from "@/pages/Connections";
+import Connections from "@/pages/ConnectionsNew";
 import Landing from "@/pages/Landing";
 import { Toaster } from "@/components/ui/sonner";
 

@@ -1,19 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { ExecutionLog } from '@/store/workflow-store';
 
-interface RealtimeEvent {
-    type: 'agent_started' | 'agent_completed' | 'agent_failed' | 'execution_completed' | 'execution_failed';
-    payload: {
-        executionId: string;
-        agentId?: string;
-        agentName?: string;
-        status?: string;
-        output?: unknown;
-        error?: string;
-        timestamp: string;
-    };
-}
-
 interface UseRealtimeOptions {
     onAgentStarted?: (agentId: string, agentName: string) => void;
     onAgentCompleted?: (log: ExecutionLog) => void;
@@ -22,12 +9,10 @@ interface UseRealtimeOptions {
     onExecutionFailed?: (error: string) => void;
 }
 
-export function useRealtime(executionId: string | null, options: UseRealtimeOptions = {}) {
+export function useRealtime(executionId: string | null, _options: UseRealtimeOptions = {}) {
     const [connected, setConnected] = useState(false);
-    const [logs, setLogs] = useState<ExecutionLog[]>([]);
+    const [logs, _setLogs] = useState<ExecutionLog[]>([]);
     const wsRef = useRef<WebSocket | null>(null);
-    const reconnectAttempts = useRef(0);
-    const maxReconnectAttempts = 5;
 
     const connect = useCallback(() => {
         if (!executionId) return;
@@ -62,6 +47,9 @@ export function useRealtime(executionId: string | null, options: UseRealtimeOpti
         setConnected(false);
     }, []);
 
+    // Event handler for when we implement real WebSocket support
+    // Kept for future WebSocket implementation
+    /*
     const handleEvent = useCallback((event: RealtimeEvent) => {
         const { type, payload } = event;
 
@@ -75,9 +63,9 @@ export function useRealtime(executionId: string | null, options: UseRealtimeOpti
                             id: `${payload.agentId}-${Date.now()}`,
                             agentId: payload.agentId,
                             agentName: payload.agentName,
-                            status: 'running',
+                            status: 'running' as const,
                             startedAt: payload.timestamp,
-                        },
+                        } as ExecutionLog,
                     ]);
                 }
                 break;
@@ -127,6 +115,7 @@ export function useRealtime(executionId: string | null, options: UseRealtimeOpti
                 break;
         }
     }, [options]);
+    */
 
     useEffect(() => {
         const cleanup = connect();
@@ -145,7 +134,7 @@ export function useRealtime(executionId: string | null, options: UseRealtimeOpti
 }
 
 // Hook for simulating real-time execution updates (for demo purposes)
-export function useExecutionSimulation(executionId: string | null) {
+export function useExecutionSimulation(_executionId: string | null) {
     const [status, setStatus] = useState<'idle' | 'running' | 'completed' | 'failed'>('idle');
     const [progress, setProgress] = useState(0);
     const [currentAgent, setCurrentAgent] = useState<string | null>(null);

@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { cn } from '@/lib/utils';
-import { Globe, ArrowRight, ArrowLeft, RefreshCw, Trash2, Send } from 'lucide-react';
+import { Globe } from 'lucide-react';
 
 export interface HttpNodeData {
     label: string;
@@ -21,19 +21,10 @@ const METHOD_COLORS: Record<string, string> = {
     'DELETE': 'bg-red-600 text-red-100',
 };
 
-const METHOD_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-    'GET': ArrowLeft,
-    'POST': Send,
-    'PUT': RefreshCw,
-    'PATCH': RefreshCw,
-    'DELETE': Trash2,
-};
-
 function HttpNode({ data, selected }: NodeProps) {
     const nodeData = data as unknown as HttpNodeData;
     const method = nodeData.method || 'GET';
     const status = nodeData.status || 'idle';
-    const MethodIcon = METHOD_ICONS[method] || ArrowRight;
 
     // Parse URL for display
     let displayUrl = nodeData.url || 'https://api.example.com';

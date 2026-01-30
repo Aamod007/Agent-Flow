@@ -35,7 +35,15 @@ import {
     Wand2,
     ArrowRightLeft,
     Filter,
-    Braces
+    Braces,
+    // New n8n-style node icons
+    Settings2,
+    AlertOctagon,
+    Reply,
+    StickyNote,
+    Pause,
+    Workflow,
+    Folder
 } from 'lucide-react';
 
 interface AgentTemplate {
@@ -62,6 +70,7 @@ const AGENT_CATEGORIES: AgentCategory[] = [
             { type: 'trigger-webhook', label: 'Webhook Trigger', icon: Webhook, description: 'Start workflow via HTTP' },
             { type: 'trigger-schedule', label: 'Schedule Trigger', icon: Clock, description: 'Run on a schedule' },
             { type: 'trigger-manual', label: 'Manual Trigger', icon: Play, description: 'Start manually' },
+            { type: 'error-trigger', label: 'Error Trigger', icon: AlertOctagon, description: 'Catch workflow errors' },
         ]
     },
     // === NEW: LOGIC & FLOW ===
@@ -74,6 +83,7 @@ const AGENT_CATEGORIES: AgentCategory[] = [
             { type: 'switch', label: 'Switch', icon: Route, description: 'Multiple output branches' },
             { type: 'loop', label: 'Loop', icon: Repeat, description: 'Iterate over items' },
             { type: 'merge', label: 'Merge', icon: Merge, description: 'Combine branches' },
+            { type: 'wait', label: 'Wait', icon: Pause, description: 'Pause execution' },
         ]
     },
     // === NEW: DATA TRANSFORM ===
@@ -83,6 +93,7 @@ const AGENT_CATEGORIES: AgentCategory[] = [
         color: 'text-violet-400',
         agents: [
             { type: 'transformer', label: 'Transformer', icon: Wand2, description: 'Transform data fields' },
+            { type: 'set', label: 'Set / Edit Fields', icon: Settings2, description: 'Set or modify field values' },
             { type: 'filter', label: 'Filter', icon: Filter, description: 'Filter array items' },
             { type: 'mapper', label: 'Field Mapper', icon: ArrowRightLeft, description: 'Map fields to new names' },
             { type: 'code', label: 'Code (JavaScript)', icon: Braces, description: 'Custom JS code' },
@@ -95,6 +106,18 @@ const AGENT_CATEGORIES: AgentCategory[] = [
         color: 'text-emerald-400',
         agents: [
             { type: 'http', label: 'HTTP Request', icon: Globe, description: 'Call external APIs' },
+            { type: 'respond-webhook', label: 'Respond to Webhook', icon: Reply, description: 'Send webhook response' },
+        ]
+    },
+    // === NEW: UTILITIES ===
+    {
+        name: 'Utilities',
+        icon: Settings2,
+        color: 'text-slate-400',
+        agents: [
+            { type: 'sticky-note', label: 'Sticky Note', icon: StickyNote, description: 'Add comments to canvas' },
+            { type: 'sub-workflow', label: 'Execute Workflow', icon: Workflow, description: 'Run another workflow' },
+            { type: 'group', label: 'Group / Container', icon: Folder, description: 'Group nodes together' },
         ]
     },
     // === EXISTING CATEGORIES ===
