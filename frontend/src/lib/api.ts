@@ -458,7 +458,11 @@ export const api = {
         const res = await fetch(`${API_BASE_URL}/oauth/callback`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, state }),
+            body: JSON.stringify({ 
+                code, 
+                state,
+                redirectUri: `${window.location.origin}/oauth/callback`
+            }),
         });
         if (!res.ok) throw new Error('Failed to exchange OAuth code');
         return res.json();

@@ -320,6 +320,398 @@ export const CONNECTION_PROVIDERS: ConnectionProvider[] = [
             },
         ],
     },
+    // AI & LLM Providers
+    {
+        id: 'openai',
+        name: 'OpenAI',
+        description: 'Connect to GPT-4, ChatGPT, and DALL-E APIs',
+        icon: 'openai',
+        color: '#00A67E',
+        category: 'custom',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'apiKey',
+                label: 'API Key',
+                type: 'password',
+                placeholder: 'sk-...',
+                required: true,
+                helpText: 'Get your API key from platform.openai.com',
+            },
+            {
+                id: 'organization',
+                label: 'Organization ID (optional)',
+                type: 'text',
+                placeholder: 'org-...',
+            },
+        ],
+        docsUrl: 'https://platform.openai.com/docs',
+    },
+    {
+        id: 'anthropic',
+        name: 'Anthropic (Claude)',
+        description: 'Connect to Claude AI models',
+        icon: 'anthropic',
+        color: '#D4A574',
+        category: 'custom',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'apiKey',
+                label: 'API Key',
+                type: 'password',
+                placeholder: 'sk-ant-...',
+                required: true,
+                helpText: 'Get your API key from console.anthropic.com',
+            },
+        ],
+        docsUrl: 'https://docs.anthropic.com',
+    },
+    // Productivity - Additional
+    {
+        id: 'trello',
+        name: 'Trello',
+        description: 'Manage boards, lists, and cards',
+        icon: 'trello',
+        color: '#0079BF',
+        category: 'productivity',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'apiKey',
+                label: 'API Key',
+                type: 'password',
+                placeholder: 'Your Trello API key',
+                required: true,
+                helpText: 'Get from trello.com/app-key',
+            },
+            {
+                id: 'token',
+                label: 'Token',
+                type: 'password',
+                placeholder: 'Your Trello token',
+                required: true,
+            },
+        ],
+        docsUrl: 'https://developer.atlassian.com/cloud/trello/',
+    },
+    {
+        id: 'airtable',
+        name: 'Airtable',
+        description: 'Work with Airtable bases and records',
+        icon: 'airtable',
+        color: '#18BFFF',
+        category: 'productivity',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'apiKey',
+                label: 'API Key',
+                type: 'password',
+                placeholder: 'Your Airtable API key',
+                required: true,
+                helpText: 'Get from airtable.com/account',
+            },
+        ],
+        docsUrl: 'https://airtable.com/developers/web/api',
+    },
+    {
+        id: 'asana',
+        name: 'Asana',
+        description: 'Manage tasks, projects, and teams',
+        icon: 'asana',
+        color: '#F06A6A',
+        category: 'productivity',
+        authType: 'oauth2',
+        oauth: {
+            clientId: '',
+            authUrl: 'https://app.asana.com/-/oauth_authorize',
+            tokenUrl: 'https://app.asana.com/-/oauth_token',
+            scopes: ['default'],
+            redirectUri: `${getBaseUrl()}/api/oauth/callback/asana`,
+        },
+        docsUrl: 'https://developers.asana.com',
+    },
+    // E-commerce & CRM
+    {
+        id: 'shopify',
+        name: 'Shopify',
+        description: 'Manage products, orders, and customers',
+        icon: 'shopify',
+        color: '#96BF48',
+        category: 'productivity',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'shopUrl',
+                label: 'Shop URL',
+                type: 'url',
+                placeholder: 'myshop.myshopify.com',
+                required: true,
+            },
+            {
+                id: 'accessToken',
+                label: 'Admin API Access Token',
+                type: 'password',
+                required: true,
+                helpText: 'Create a private app to get the access token',
+            },
+        ],
+        docsUrl: 'https://shopify.dev/docs/api',
+    },
+    {
+        id: 'stripe',
+        name: 'Stripe',
+        description: 'Process payments and manage subscriptions',
+        icon: 'stripe',
+        color: '#635BFF',
+        category: 'productivity',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'secretKey',
+                label: 'Secret Key',
+                type: 'password',
+                placeholder: 'sk_live_... or sk_test_...',
+                required: true,
+                helpText: 'Get from Stripe Dashboard > Developers > API keys',
+            },
+        ],
+        docsUrl: 'https://stripe.com/docs/api',
+    },
+    {
+        id: 'hubspot',
+        name: 'HubSpot',
+        description: 'Manage contacts, deals, and marketing',
+        icon: 'hubspot',
+        color: '#FF7A59',
+        category: 'productivity',
+        authType: 'oauth2',
+        oauth: {
+            clientId: '',
+            authUrl: 'https://app.hubspot.com/oauth/authorize',
+            tokenUrl: 'https://api.hubapi.com/oauth/v1/token',
+            scopes: ['contacts', 'content'],
+            redirectUri: `${getBaseUrl()}/api/oauth/callback/hubspot`,
+        },
+        docsUrl: 'https://developers.hubspot.com/docs/api',
+    },
+    {
+        id: 'salesforce',
+        name: 'Salesforce',
+        description: 'CRM, leads, opportunities, and more',
+        icon: 'salesforce',
+        color: '#00A1E0',
+        category: 'productivity',
+        authType: 'oauth2',
+        oauth: {
+            clientId: '',
+            authUrl: 'https://login.salesforce.com/services/oauth2/authorize',
+            tokenUrl: 'https://login.salesforce.com/services/oauth2/token',
+            scopes: ['api', 'refresh_token'],
+            redirectUri: `${getBaseUrl()}/api/oauth/callback/salesforce`,
+        },
+        docsUrl: 'https://developer.salesforce.com/docs',
+    },
+    // Communication - Additional
+    {
+        id: 'twilio',
+        name: 'Twilio',
+        description: 'Send SMS, make calls, and manage communications',
+        icon: 'twilio',
+        color: '#F22F46',
+        category: 'communication',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'accountSid',
+                label: 'Account SID',
+                type: 'text',
+                required: true,
+                placeholder: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+            },
+            {
+                id: 'authToken',
+                label: 'Auth Token',
+                type: 'password',
+                required: true,
+            },
+            {
+                id: 'phoneNumber',
+                label: 'From Phone Number',
+                type: 'text',
+                placeholder: '+1234567890',
+                helpText: 'Your Twilio phone number',
+            },
+        ],
+        docsUrl: 'https://www.twilio.com/docs',
+    },
+    {
+        id: 'sendgrid',
+        name: 'SendGrid',
+        description: 'Send transactional and marketing emails',
+        icon: 'sendgrid',
+        color: '#1A82E2',
+        category: 'communication',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'apiKey',
+                label: 'API Key',
+                type: 'password',
+                required: true,
+                placeholder: 'SG.xxxxxx',
+                helpText: 'Create an API key in SendGrid settings',
+            },
+        ],
+        docsUrl: 'https://docs.sendgrid.com',
+    },
+    {
+        id: 'telegram',
+        name: 'Telegram Bot',
+        description: 'Send messages and manage Telegram bots',
+        icon: 'telegram',
+        color: '#0088CC',
+        category: 'communication',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'botToken',
+                label: 'Bot Token',
+                type: 'password',
+                required: true,
+                placeholder: '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11',
+                helpText: 'Get from @BotFather on Telegram',
+            },
+        ],
+        docsUrl: 'https://core.telegram.org/bots/api',
+    },
+    // Cloud & DevOps
+    {
+        id: 'aws',
+        name: 'Amazon Web Services',
+        description: 'S3, Lambda, SES, and other AWS services',
+        icon: 'aws',
+        color: '#FF9900',
+        category: 'storage',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'accessKeyId',
+                label: 'Access Key ID',
+                type: 'text',
+                required: true,
+                placeholder: 'AKIAIOSFODNN7EXAMPLE',
+            },
+            {
+                id: 'secretAccessKey',
+                label: 'Secret Access Key',
+                type: 'password',
+                required: true,
+            },
+            {
+                id: 'region',
+                label: 'Region',
+                type: 'text',
+                placeholder: 'us-east-1',
+                helpText: 'AWS region (e.g., us-east-1, eu-west-1)',
+            },
+        ],
+        docsUrl: 'https://docs.aws.amazon.com',
+    },
+    {
+        id: 'azure',
+        name: 'Microsoft Azure',
+        description: 'Azure services including Blob Storage, Functions',
+        icon: 'azure',
+        color: '#0078D4',
+        category: 'storage',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'connectionString',
+                label: 'Connection String',
+                type: 'password',
+                required: true,
+                helpText: 'Azure Storage connection string',
+            },
+        ],
+        docsUrl: 'https://docs.microsoft.com/azure',
+    },
+    // Databases
+    {
+        id: 'mongodb',
+        name: 'MongoDB',
+        description: 'Connect to MongoDB databases',
+        icon: 'mongodb',
+        color: '#47A248',
+        category: 'storage',
+        authType: 'api_key',
+        fields: [
+            {
+                id: 'connectionString',
+                label: 'Connection String',
+                type: 'password',
+                required: true,
+                placeholder: 'mongodb+srv://user:pass@cluster.mongodb.net/db',
+                helpText: 'MongoDB connection URI',
+            },
+        ],
+        docsUrl: 'https://docs.mongodb.com',
+    },
+    {
+        id: 'postgresql',
+        name: 'PostgreSQL',
+        description: 'Connect to PostgreSQL databases',
+        icon: 'postgres',
+        color: '#336791',
+        category: 'storage',
+        authType: 'basic',
+        fields: [
+            {
+                id: 'host',
+                label: 'Host',
+                type: 'text',
+                required: true,
+                placeholder: 'localhost',
+            },
+            {
+                id: 'port',
+                label: 'Port',
+                type: 'text',
+                placeholder: '5432',
+            },
+            {
+                id: 'database',
+                label: 'Database',
+                type: 'text',
+                required: true,
+            },
+            {
+                id: 'username',
+                label: 'Username',
+                type: 'text',
+                required: true,
+            },
+            {
+                id: 'password',
+                label: 'Password',
+                type: 'password',
+                required: true,
+            },
+            {
+                id: 'ssl',
+                label: 'SSL Mode',
+                type: 'select',
+                options: [
+                    { value: 'disable', label: 'Disable' },
+                    { value: 'require', label: 'Require' },
+                    { value: 'verify-full', label: 'Verify Full' },
+                ],
+            },
+        ],
+        docsUrl: 'https://www.postgresql.org/docs/',
+    },
 ];
 
 // Helper to get provider by ID
@@ -332,13 +724,27 @@ export function getProvidersByCategory(category: ConnectionProvider['category'])
     return CONNECTION_PROVIDERS.filter(p => p.category === category);
 }
 
-// Start OAuth flow
-export function startOAuthFlow(provider: ConnectionProvider): void {
+// OAuth popup window reference
+let oauthPopup: Window | null = null;
+
+// Start OAuth flow in a popup window (n8n style)
+export function startOAuthFlow(
+    provider: ConnectionProvider,
+    onSuccess?: (connection: SavedConnection) => void,
+    onError?: (error: string) => void
+): void {
     if (provider.authType !== 'oauth2' || !provider.oauth) {
         throw new Error('Provider does not support OAuth');
     }
 
-    const { clientId, authUrl, scopes, redirectUri } = provider.oauth;
+    const { clientId, authUrl, scopes } = provider.oauth;
+    
+    // If no client ID is configured, create a demo connection directly
+    if (!clientId) {
+        // Create demo connection via API
+        createDemoConnection(provider, onSuccess, onError);
+        return;
+    }
     
     // Generate state for CSRF protection
     const state = btoa(JSON.stringify({
@@ -353,7 +759,7 @@ export function startOAuthFlow(provider: ConnectionProvider): void {
     // Build OAuth URL
     const params = new URLSearchParams({
         client_id: clientId,
-        redirect_uri: redirectUri,
+        redirect_uri: `${window.location.origin}/oauth/callback`,
         response_type: 'code',
         scope: scopes.join(' '),
         state,
@@ -364,13 +770,106 @@ export function startOAuthFlow(provider: ConnectionProvider): void {
         params.set('owner', 'user');
     }
     
-    if (provider.id.startsWith('google')) {
+    if (provider.id.startsWith('google') || provider.id === 'gmail' || provider.id === 'google-calendar' || provider.id === 'google-sheets' || provider.id === 'google-drive') {
         params.set('access_type', 'offline');
         params.set('prompt', 'consent');
     }
 
-    // Redirect to OAuth provider
-    window.location.href = `${authUrl}?${params.toString()}`;
+    const oauthUrl = `${authUrl}?${params.toString()}`;
+    
+    // Calculate popup window position (centered)
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    
+    // Close any existing popup
+    if (oauthPopup && !oauthPopup.closed) {
+        oauthPopup.close();
+    }
+    
+    // Open OAuth popup
+    oauthPopup = window.open(
+        oauthUrl,
+        'oauth_popup',
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=yes,status=yes`
+    );
+    
+    if (!oauthPopup) {
+        onError?.('Failed to open popup window. Please allow popups for this site.');
+        return;
+    }
+    
+    // Set up message listener for popup communication
+    const messageHandler = (event: MessageEvent) => {
+        // Verify origin
+        if (event.origin !== window.location.origin) {
+            return;
+        }
+        
+        if (event.data?.type === 'OAUTH_CALLBACK') {
+            window.removeEventListener('message', messageHandler);
+            
+            if (event.data.success && event.data.connection) {
+                onSuccess?.(event.data.connection);
+            } else {
+                onError?.(event.data.error || 'Authentication failed');
+            }
+        }
+    };
+    
+    window.addEventListener('message', messageHandler);
+    
+    // Clean up on popup close (polling since there's no reliable close event)
+    const pollTimer = setInterval(() => {
+        if (oauthPopup?.closed) {
+            clearInterval(pollTimer);
+            window.removeEventListener('message', messageHandler);
+        }
+    }, 500);
+    
+    // Timeout after 5 minutes
+    setTimeout(() => {
+        clearInterval(pollTimer);
+        window.removeEventListener('message', messageHandler);
+        if (oauthPopup && !oauthPopup.closed) {
+            oauthPopup.close();
+        }
+    }, 5 * 60 * 1000);
+}
+
+// Create a demo connection when OAuth isn't configured
+async function createDemoConnection(
+    provider: ConnectionProvider,
+    onSuccess?: (connection: SavedConnection) => void,
+    onError?: (error: string) => void
+): Promise<void> {
+    try {
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+        const res = await fetch(`${API_BASE_URL}/connections`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                providerId: provider.id,
+                name: `[Demo] My ${provider.name}`,
+                credentials: {
+                    accessToken: `demo_token_${Date.now()}`,
+                    isDemo: true,
+                },
+            }),
+        });
+        
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to create demo connection');
+        }
+        
+        const connection = await res.json();
+        onSuccess?.(connection);
+    } catch (error) {
+        console.error('Demo connection error:', error);
+        onError?.(error instanceof Error ? error.message : 'Failed to create connection');
+    }
 }
 
 // Verify OAuth state

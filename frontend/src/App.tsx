@@ -8,6 +8,7 @@ import Analytics from "@/pages/Analytics";
 import Settings from "@/pages/Settings";
 import Connections from "@/pages/ConnectionsNew";
 import Landing from "@/pages/Landing";
+import OAuthCallback from "@/pages/OAuthCallback";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -16,6 +17,9 @@ function App() {
       <Routes>
         {/* Landing page (public) */}
         <Route path="/" element={<Landing />} />
+        
+        {/* OAuth callback (standalone page outside dashboard layout) */}
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
 
         {/* Dashboard routes (authenticated) */}
         <Route path="/dashboard" element={<DashboardLayout />}>

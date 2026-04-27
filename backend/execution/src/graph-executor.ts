@@ -306,6 +306,14 @@ export class GraphExecutor {
         state: GraphExecutionState,
         options: ExecutionOptions
     ): Promise<any> {
+        // Check if this is an integration node (ends with -app or is a specific operation like slack-send-message)
+        const integrationProviders = ['slack', 'gmail', 'github', 'google-sheets', 'google-calendar', 'google-drive', 'notion', 'discord', 'jira', 'trello'];
+        const isIntegrationNode = node.type.endsWith('-app') || integrationProviders.some(p => node.type.startsWith(p + '-'));
+
+        if (isIntegrationNode) {
+            return this.executeIntegrationNode(node, input);
+        }
+
         switch (node.type) {
             case 'trigger':
                 return this.executeTriggerNode(node, input);
@@ -576,6 +584,101 @@ export class GraphExecutor {
             output: `Agent ${node.id} processed input`,
             timestamp: new Date().toISOString()
         };
+    }
+
+    private async executeIntegrationNode(node: WorkflowNode, input: any): Promise<any> {
+        const config = node.data as any;
+        
+        // Provider ID mapping for -app style nodes
+        const APP_PROVIDER_MAP: Record<string, string> = {
+            'slack-app': 'slack',
+            'discord-app': 'discord',
+            'gmail-app': 'gmail',
+            'google-sheets-app': 'google-sheets',
+            'google-calendar-app': 'google-calendar',
+            'google-drive-app': 'google-drive',
+            'notion-app': 'notion',
+            'github-app': 'github',
+            'jira-app': 'jira',
+            'trello-app': 'trello',
+        };
+
+        let provider: string;
+        let operation: string;
+
+        if (node.type.endsWith('-app')) {
+            // Generic app node: provider from map, operation from config
+            provider = APP_PROVIDER_MAP[node.type] || node.type.replace('-app', '');
+            operation = config.operation;
+            if (!operation) {
+                throw new Error(`No operation selected for ${node.type}`);
+            }
+        } else {
+            // Specific operation node: e.g. "slack-send-message", "google-sheets-read-rows"
+            // Need to match against known providers to split correctly
+            const knownProviders = ['google-sheets', 'google-calendar', 'google-drive', 'slack', 'discord', 'gmail', 'github', 'notion', 'jira', 'trello'];
+            const matchedProvider = knownProviders.find(p => node.type.startsWith(p + '-'));
+            if (matchedProvider) {
+                provider = matchedProvider;
+                operation = node.type.slice(matchedProvider.length + 1).replace(/-/g, '_');
+            } else {
+                const [first, ...rest] = node.type.split('-');
+                provider = first;
+                operation = rest.join('_');
+            }
+        }
+
+        // Check if connection is configured
+        if (!config.connectionId) {
+            throw new Error(`No connection configured for ${node.type}`);
+        }
+
+        // Fetch connection credentials from workflow service
+        const WORKFLOW_SERVICE_URL = process.env.WORKFLOW_SERVICE_URL || 'http://localhost:3001';
+        
+        try {
+            const response = await fetch(`${WORKFLOW_SERVICE_URL}/connections/${config.connectionId}`);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch connection: ${response.statusText}`);
+            }
+
+            const connection = await response.json();
+
+            // Parse credentials
+            const credentials = JSON.parse(connection.credentials);
+
+            // Import integration handler dynamically
+            const { executeIntegration } = await import('./integration-handler');
+
+            // Normalize input to DataItem array
+            const inputItems = Array.isArray(input) ? input : [{ json: input }];
+
+            // Execute integration
+            const result = await executeIntegration(
+                provider,
+                operation,
+                config,
+                {
+                    id: connection.id,
+                    providerId: connection.providerId,
+                    credentials,
+                    status: connection.status
+                },
+                inputItems
+            );
+
+            if (!result.success) {
+                throw new Error(result.error || 'Integration execution failed');
+            }
+
+            // Return data in expected format
+            return result.data || [];
+
+        } catch (error: any) {
+            console.error(`Integration node ${node.id} failed:`, error);
+            throw new Error(`${node.type} failed: ${error.message}`);
+        }
     }
 
     // ============================================================

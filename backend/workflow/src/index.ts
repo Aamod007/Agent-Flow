@@ -1525,6 +1525,27 @@ app.get('/connections', async (req, res) => {
     }
 });
 
+// Get single connection (with actual credentials for backend use)
+app.get('/connections/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const connection = await connectionModel.findUnique({
+            where: { id }
+        });
+
+        if (!connection) {
+            return res.status(404).json({ error: 'Connection not found' });
+        }
+
+        // Return full connection with credentials (for backend-to-backend calls)
+        res.json(connection);
+    } catch (error) {
+        console.error('Error fetching connection:', error);
+        res.status(500).json({ error: 'Failed to fetch connection' });
+    }
+});
+
 // Create new connection
 app.post('/connections', async (req, res) => {
     try {
@@ -1644,10 +1665,165 @@ app.post('/connections/:id/test', async (req, res) => {
     }
 });
 
+// OAuth provider configurations for token exchange
+const OAUTH_CONFIGS: Record<string, { tokenUrl: string; clientId: string; clientSecret: string; additionalParams?: Record<string, string> }> = {
+    slack: {
+        tokenUrl: 'https://slack.com/api/oauth.v2.access',
+        clientId: process.env.SLACK_CLIENT_ID || '',
+        clientSecret: process.env.SLACK_CLIENT_SECRET || '',
+    },
+    github: {
+        tokenUrl: 'https://github.com/login/oauth/access_token',
+        clientId: process.env.GITHUB_CLIENT_ID || '',
+        clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
+    },
+    google: {
+        tokenUrl: 'https://oauth2.googleapis.com/token',
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    },
+    gmail: {
+        tokenUrl: 'https://oauth2.googleapis.com/token',
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    },
+    'google-calendar': {
+        tokenUrl: 'https://oauth2.googleapis.com/token',
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    },
+    'google-sheets': {
+        tokenUrl: 'https://oauth2.googleapis.com/token',
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    },
+    'google-drive': {
+        tokenUrl: 'https://oauth2.googleapis.com/token',
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    },
+    notion: {
+        tokenUrl: 'https://api.notion.com/v1/oauth/token',
+        clientId: process.env.NOTION_CLIENT_ID || '',
+        clientSecret: process.env.NOTION_CLIENT_SECRET || '',
+    },
+    gitlab: {
+        tokenUrl: 'https://gitlab.com/oauth/token',
+        clientId: process.env.GITLAB_CLIENT_ID || '',
+        clientSecret: process.env.GITLAB_CLIENT_SECRET || '',
+    },
+    jira: {
+        tokenUrl: 'https://auth.atlassian.com/oauth/token',
+        clientId: process.env.ATLASSIAN_CLIENT_ID || '',
+        clientSecret: process.env.ATLASSIAN_CLIENT_SECRET || '',
+    },
+    dropbox: {
+        tokenUrl: 'https://api.dropboxapi.com/oauth2/token',
+        clientId: process.env.DROPBOX_CLIENT_ID || '',
+        clientSecret: process.env.DROPBOX_CLIENT_SECRET || '',
+    },
+    asana: {
+        tokenUrl: 'https://app.asana.com/-/oauth_token',
+        clientId: process.env.ASANA_CLIENT_ID || '',
+        clientSecret: process.env.ASANA_CLIENT_SECRET || '',
+    },
+    hubspot: {
+        tokenUrl: 'https://api.hubapi.com/oauth/v1/token',
+        clientId: process.env.HUBSPOT_CLIENT_ID || '',
+        clientSecret: process.env.HUBSPOT_CLIENT_SECRET || '',
+    },
+    salesforce: {
+        tokenUrl: 'https://login.salesforce.com/services/oauth2/token',
+        clientId: process.env.SALESFORCE_CLIENT_ID || '',
+        clientSecret: process.env.SALESFORCE_CLIENT_SECRET || '',
+    },
+};
+
+// Helper function to exchange OAuth code for tokens
+async function exchangeCodeForTokens(
+    providerId: string,
+    code: string,
+    redirectUri: string
+): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number; scope?: string; tokenType?: string; raw?: any }> {
+    const config = OAUTH_CONFIGS[providerId];
+    
+    if (!config) {
+        throw new Error(`OAuth not configured for provider: ${providerId}`);
+    }
+    
+    const { tokenUrl, clientId, clientSecret, additionalParams } = config;
+    
+    // Build token request body
+    const params = new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: redirectUri,
+        ...additionalParams,
+    });
+    
+    // Some providers (like GitHub, Notion) need different request formats
+    let response;
+    
+    if (providerId === 'notion') {
+        // Notion uses Basic auth with JSON body
+        const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+        response = await fetch(tokenUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${auth}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                grant_type: 'authorization_code',
+                code,
+                redirect_uri: redirectUri,
+            }),
+        });
+    } else if (providerId === 'github') {
+        // GitHub needs Accept header for JSON response
+        response = await fetch(tokenUrl, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString(),
+        });
+    } else {
+        // Standard OAuth2 token exchange
+        response = await fetch(tokenUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString(),
+        });
+    }
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+        console.error('Token exchange error:', data);
+        throw new Error(data.error_description || data.error || 'Failed to exchange code for tokens');
+    }
+    
+    // Handle different response formats
+    return {
+        accessToken: data.access_token || data.accessToken || data.authed_user?.access_token,
+        refreshToken: data.refresh_token || data.refreshToken,
+        expiresIn: data.expires_in || data.expiresIn,
+        scope: data.scope,
+        tokenType: data.token_type || 'Bearer',
+        raw: data, // Keep raw response for provider-specific data
+    };
+}
+
 // OAuth callback handler
 app.post('/oauth/callback', async (req, res) => {
     try {
-        const { code, state } = req.body;
+        const { code, state, redirectUri } = req.body;
 
         if (!code || !state) {
             return res.status(400).json({ error: 'Code and state are required' });
@@ -1663,28 +1839,69 @@ app.post('/oauth/callback', async (req, res) => {
 
         const { providerId } = stateData;
 
-        // In a real implementation, you would:
-        // 1. Exchange the code for tokens using the provider's token endpoint
-        // 2. Store the tokens securely
-        // 3. Fetch user info from the provider
-
         let user = await prisma.user.findFirst();
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Create connection with placeholder tokens
-        // In production, you'd exchange the code for real tokens here
+        let credentials: Record<string, any>;
+        let connectionName = `My ${providerId.charAt(0).toUpperCase() + providerId.slice(1)}`;
+        
+        // Check if OAuth is configured for this provider
+        const oauthConfig = OAUTH_CONFIGS[providerId];
+        
+        if (oauthConfig && oauthConfig.clientId && oauthConfig.clientSecret) {
+            // Real OAuth token exchange
+            try {
+                const tokens = await exchangeCodeForTokens(
+                    providerId,
+                    code,
+                    redirectUri || `http://localhost:5173/oauth/callback`
+                );
+                
+                credentials = {
+                    accessToken: tokens.accessToken,
+                    refreshToken: tokens.refreshToken,
+                    expiresAt: tokens.expiresIn 
+                        ? new Date(Date.now() + tokens.expiresIn * 1000).toISOString()
+                        : undefined,
+                    scope: tokens.scope,
+                    tokenType: tokens.tokenType,
+                };
+                
+                // Extract useful info from raw response for naming
+                if (tokens.raw) {
+                    if (tokens.raw.team?.name) {
+                        connectionName = `Slack - ${tokens.raw.team.name}`;
+                    } else if (tokens.raw.workspace_name) {
+                        connectionName = `Notion - ${tokens.raw.workspace_name}`;
+                    }
+                }
+            } catch (tokenError: any) {
+                console.error('Token exchange failed:', tokenError);
+                return res.status(400).json({ 
+                    error: `Failed to authenticate with ${providerId}: ${tokenError.message}` 
+                });
+            }
+        } else {
+            // Demo mode - create mock credentials
+            console.log(`OAuth not configured for ${providerId}, using demo mode`);
+            credentials = {
+                accessToken: `demo_token_${Date.now()}`,
+                refreshToken: `demo_refresh_${Date.now()}`,
+                expiresAt: new Date(Date.now() + 3600000).toISOString(),
+                isDemo: true,
+            };
+            connectionName = `[Demo] ${connectionName}`;
+        }
+
+        // Create connection
         const connection = await connectionModel.create({
             data: {
                 userId: user.id,
                 providerId,
-                name: `My ${providerId.charAt(0).toUpperCase() + providerId.slice(1)}`,
-                credentials: JSON.stringify({
-                    accessToken: `mock_token_${Date.now()}`,
-                    refreshToken: `mock_refresh_${Date.now()}`,
-                    expiresAt: new Date(Date.now() + 3600000).toISOString()
-                }),
+                name: connectionName,
+                credentials: JSON.stringify(credentials),
                 status: 'active',
                 connectedAt: new Date()
             }

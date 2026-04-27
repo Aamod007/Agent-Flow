@@ -13,7 +13,18 @@ export type NodeType =
     | 'http'            // HTTP request
     | 'transformer'     // Data transformation
     | 'trigger'         // Webhook/schedule trigger
-    | 'code';           // Custom JavaScript code
+    | 'code'            // Custom JavaScript code
+    // App Integration Nodes
+    | 'slack-app'       // Slack integration
+    | 'discord-app'     // Discord integration
+    | 'gmail-app'       // Gmail integration
+    | 'google-sheets-app' // Google Sheets integration
+    | 'google-calendar-app' // Google Calendar integration
+    | 'google-drive-app' // Google Drive integration
+    | 'github-app'      // GitHub integration
+    | 'notion-app'      // Notion integration
+    | 'jira-app'        // Jira integration
+    | 'trello-app';     // Trello integration
 
 // ==========================================
 // RETRY & ERROR HANDLING
@@ -149,6 +160,52 @@ export interface CodeConfig extends BaseNodeConfig {
 }
 
 // ==========================================
+// APP INTEGRATION CONFIGS
+// ==========================================
+
+export interface IntegrationConfig extends BaseNodeConfig {
+    connectionId?: string;   // Reference to saved connection
+    operation: string;       // Operation to perform (e.g., 'send_message')
+    [key: string]: unknown;  // Operation-specific config
+}
+
+export interface SlackIntegrationConfig extends IntegrationConfig {
+    operation: 'send_message' | 'get_messages' | 'create_channel' | 'upload_file' | 'react';
+    channel?: string;
+    message?: string;
+}
+
+export interface GmailIntegrationConfig extends IntegrationConfig {
+    operation: 'send_email' | 'get_emails' | 'get_email' | 'reply' | 'create_draft';
+    to?: string;
+    subject?: string;
+    body?: string;
+    query?: string;
+}
+
+export interface GoogleSheetsIntegrationConfig extends IntegrationConfig {
+    operation: 'read_rows' | 'append_row' | 'update_row' | 'delete_row' | 'create_sheet';
+    spreadsheetId?: string;
+    sheetName?: string;
+    range?: string;
+}
+
+export interface GitHubIntegrationConfig extends IntegrationConfig {
+    operation: 'create_issue' | 'get_issues' | 'create_pr' | 'get_repos' | 'create_comment' | 'get_commits';
+    owner?: string;
+    repo?: string;
+    title?: string;
+    body?: string;
+}
+
+export interface NotionIntegrationConfig extends IntegrationConfig {
+    operation: 'create_page' | 'get_page' | 'update_page' | 'query_database' | 'create_database';
+    databaseId?: string;
+    pageId?: string;
+    title?: string;
+}
+
+// ==========================================
 // GENERIC NODE
 // ==========================================
 
@@ -161,7 +218,7 @@ export interface Node {
         label: string;
         nodeType: NodeType;
         config: AgentConfig | ConditionConfig | SwitchConfig | LoopConfig | 
-                MergeConfig | HttpConfig | TransformerConfig | TriggerConfig | CodeConfig;
+                MergeConfig | HttpConfig | TransformerConfig | TriggerConfig | CodeConfig | IntegrationConfig;
     };
 }
 

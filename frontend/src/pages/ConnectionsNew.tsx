@@ -47,6 +47,7 @@ import {
     type ConnectionProvider,
     type SavedConnection,
 } from "@/lib/connections";
+import { CredentialModal } from "@/components/workflow/CredentialModal";
 
 // Icon mapping for providers
 const PROVIDER_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -63,6 +64,26 @@ const PROVIDER_ICONS: Record<string, React.ComponentType<{ className?: string }>
     dropbox: () => <span className="text-lg">📦</span>,
     webhook: () => <Webhook className="w-5 h-5" />,
     'http-api': () => <Globe className="w-5 h-5" />,
+    // AI providers
+    openai: () => <span className="text-lg">🤖</span>,
+    anthropic: () => <span className="text-lg">🧠</span>,
+    // Productivity
+    trello: () => <span className="text-lg">📋</span>,
+    airtable: () => <span className="text-lg">📊</span>,
+    asana: () => <span className="text-lg">✅</span>,
+    shopify: () => <span className="text-lg">🛒</span>,
+    stripe: () => <span className="text-lg">💳</span>,
+    hubspot: () => <span className="text-lg">🧡</span>,
+    salesforce: () => <span className="text-lg">☁️</span>,
+    // Communication
+    twilio: () => <span className="text-lg">📱</span>,
+    sendgrid: () => <span className="text-lg">📧</span>,
+    telegram: () => <span className="text-lg">✈️</span>,
+    // Cloud & Storage
+    aws: () => <span className="text-lg">☁️</span>,
+    azure: () => <span className="text-lg">🔷</span>,
+    mongodb: () => <span className="text-lg">🍃</span>,
+    postgresql: () => <span className="text-lg">🐘</span>,
 };
 
 const CATEGORY_ICONS = {
@@ -693,13 +714,15 @@ export default function Connections() {
                 </TabsContent>
             </Tabs>
 
-            {/* Connection Dialog */}
-            <ConnectionDialog
+            {/* Connection Dialog - Using new CredentialModal */}
+            <CredentialModal
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
                 provider={selectedProvider}
-                isOpen={isDialogOpen}
-                onClose={() => setIsDialogOpen(false)}
-                onSave={handleSaveConnection}
-                isSaving={isSaving}
+                onSuccess={(connection) => {
+                    setConnections(prev => [...prev, connection]);
+                    setIsDialogOpen(false);
+                }}
             />
         </div>
     );

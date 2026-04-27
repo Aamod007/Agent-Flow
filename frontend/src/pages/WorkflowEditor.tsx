@@ -39,6 +39,8 @@ import DatabaseNode from '@/components/workflow/DatabaseNode';
 import StickyNoteNode from '@/components/workflow/StickyNoteNode';
 import SubWorkflowNode from '@/components/workflow/SubWorkflowNode';
 import GroupNode from '@/components/workflow/GroupNode';
+// App Integration Nodes (connect to external services)
+import { APP_INTEGRATION_NODE_TYPES } from '@/components/workflow/AppIntegrationNodes';
 // Custom edge types
 import { MemoizedCustomEdge } from '@/components/workflow/ConnectionTypes';
 // Additional dialogs and panels
@@ -67,7 +69,7 @@ import { Link } from 'react-router-dom';
 let id = 0;
 const getId = () => `agent_${id++}`;
 
-// Register custom node types
+// Register custom node types (including app integrations)
 const nodeTypes = {
     agent: AgentNode,
     condition: ConditionNode,
@@ -87,6 +89,8 @@ const nodeTypes = {
     stickyNote: StickyNoteNode,
     subWorkflow: SubWorkflowNode,
     group: GroupNode,
+    // App Integration nodes (Slack, Gmail, GitHub, etc.)
+    ...APP_INTEGRATION_NODE_TYPES,
 };
 
 // Custom edge types

@@ -101,12 +101,30 @@ const AGENT_CATEGORIES: AgentCategory[] = [
     },
     // === NEW: INTEGRATIONS ===
     {
-        name: 'Integrations',
+        name: 'Core Integrations',
         icon: Globe,
         color: 'text-emerald-400',
         agents: [
             { type: 'http', label: 'HTTP Request', icon: Globe, description: 'Call external APIs' },
             { type: 'respond-webhook', label: 'Respond to Webhook', icon: Reply, description: 'Send webhook response' },
+        ]
+    },
+    // === APP INTEGRATIONS ===
+    {
+        name: 'App Integrations',
+        icon: MessageSquare,
+        color: 'text-pink-400',
+        agents: [
+            { type: 'slack-app', label: 'Slack', icon: MessageSquare, description: 'Send messages to Slack channels' },
+            { type: 'discord-app', label: 'Discord', icon: MessageSquare, description: 'Post to Discord servers' },
+            { type: 'gmail-app', label: 'Gmail', icon: Mail, description: 'Send and read emails' },
+            { type: 'google-sheets-app', label: 'Google Sheets', icon: FileText, description: 'Read/write spreadsheet data' },
+            { type: 'google-calendar-app', label: 'Google Calendar', icon: Calendar, description: 'Manage calendar events' },
+            { type: 'google-drive-app', label: 'Google Drive', icon: Folder, description: 'Upload and manage files' },
+            { type: 'notion-app', label: 'Notion', icon: FileText, description: 'Create and update pages' },
+            { type: 'github-app', label: 'GitHub', icon: Code, description: 'Manage repos and issues' },
+            { type: 'jira-app', label: 'Jira', icon: CheckCircle, description: 'Create and track issues' },
+            { type: 'trello-app', label: 'Trello', icon: FileText, description: 'Manage boards and cards' },
         ]
     },
     // === NEW: UTILITIES ===
